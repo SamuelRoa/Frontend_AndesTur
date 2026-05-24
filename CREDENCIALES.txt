@@ -1,0 +1,134 @@
+"""
+╔════════════════════════════════════════════════════════════════════════════╗
+║                        🏔️ AndesTur - Sistema Administrativo 🏔️          ║
+║                     Panel de Agencia Turística - Demo                      ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                      ✅ CREDENCIALES DE ACCESO (Demo)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1️⃣  ADMINISTRADOR (Acceso Completo)
+    ┌─────────────────────────────────────────────────────────────┐
+    │ Email:        admin@andetur.com                             │
+    │ Contraseña:   admin123                                      │
+    │ Rol:          Administrador - Acceso a todos los módulos    │
+    └─────────────────────────────────────────────────────────────┘
+
+2️⃣  GERENTE (Gestión Operacional)
+    ┌─────────────────────────────────────────────────────────────┐
+    │ Email:        manager@andetur.com                           │
+    │ Contraseña:   manager123                                    │
+    │ Rol:          Gerente - Gestión de operaciones             │
+    └─────────────────────────────────────────────────────────────┘
+
+3️⃣  USUARIO (Visualización)
+    ┌─────────────────────────────────────────────────────────────┐
+    │ Email:        usuario@andetur.com                           │
+    │ Contraseña:   user123                                       │
+    │ Rol:          Usuario - Acceso de lectura                  │
+    └─────────────────────────────────────────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                           🎯 CÓMO INGRESAR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✨ OPCIÓN 1: Click Rápido en Credenciales de Demo
+   1. Abre http://localhost:3000
+   2. Haz clic en cualquier tarjeta de credencial
+   3. Los campos se rellenan automáticamente
+   4. Haz clic en "Ingresar al Sistema"
+
+📝 OPCIÓN 2: Ingreso Manual
+   1. Abre http://localhost:3000
+   2. Escribe el email manualmente
+   3. Escribe la contraseña
+   4. Haz clic en "Ingresar al Sistema"
+
+⚙️  OPCIÓN 3: Crear Cuenta (Signup)
+   1. Haz clic en "Registrate aquí"
+   2. Completa el formulario con datos nuevos
+   3. Cualquier email/contraseña válida funciona
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                        🌓 CAMBIAR ENTRE TEMAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📍 Ubicación: Esquina superior derecha de la pantalla
+
+🌙 En Tema Claro:
+   • Ícono: Luna (🌙)
+   • Haz clic para cambiar a Tema Oscuro
+
+☀️  En Tema Oscuro:
+   • Ícono: Sol (☀️)
+   • Haz clic para cambiar a Tema Claro
+
+💾 El tema se guarda automáticamente en tu navegador
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                          📊 MÓDULOS DISPONIBLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Una vez dentro del sistema, puedes acceder a estos módulos desde el sidebar:
+
+🏠 Dashboard          Estadísticas principales y gráficos
+👥 Empleados          Gestión de nómina y personal
+📍 Destinos           Catálogo de destinos turísticos
+🎫 Paquetes           Ofertas de paquetes turísticos
+🚌 Vehículos          Flota de transporte
+📋 Reservas           Gestión de reservaciones
+💰 Finanzas           Análisis financiero con gráficos
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                        🎨 PALETA DE COLORES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🟩 Verde Páramo       #1B5E20    Color primario (botones, acentos)
+🔵 Azul Laguna        #0277BD    Color secundario (links, resaltes)
+⬜ Blanco Nieve       #FFFFFF    Fondo tema claro
+🟦 Gris Pizarra       #1E293B    Texto tema claro
+🔹 Verde Neblina      #E8F5E9    Fondos suaves tema claro
+
+🟩 Verde Claro        #2E7D32    Color primario tema oscuro
+🔵 Azul Cielo         #0288D1    Color secundario tema oscuro
+⬛ Azul Noche         #0F172A    Fondo tema oscuro
+⬜ Blanco Nieve       #F1F5F9    Texto tema oscuro
+🔹 Gris Oscuro        #334155    Fondos suaves tema oscuro
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                          📝 TIPOGRAFÍA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📰 Serif (Identidad)    Merriweather Bold and Regular
+    ✓ Títulos y encabezados
+    ✓ Logo "AndesTur"
+    ✓ Elementos destacados
+
+📋 Sans-Serif (Sistema)  Inter Regular
+    ✓ Texto body
+    ✓ Formularios
+    ✓ Navegación
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                       ℹ️  INFORMACIÓN IMPORTANTE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Este es un sistema de demostración con datos ficticios
+✅ Todos los datos son simulados (mock data)
+✅ No requiere conexión a base de datos
+✅ El tema se persiste automáticamente
+✅ Funciona completamente offline
+
+⚠️  Para producción:
+   • Conecta a tu base de datos (Supabase recomendado)
+   • Implementa autenticación real
+   • Agrega validaciones adicionales
+   • Configura variables de entorno
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 ¡Listo para explorar! Abre http://localhost:3000 y ¡disfruta!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+"""
