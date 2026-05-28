@@ -5,6 +5,10 @@ import '@/styles/globals.css'
 export const metadata = {
   title: 'AndesTur - Panel Administrativo',
   description: 'Sistema Administrativo de Agencia Turística',
+  icons: {
+    icon: '/Logo_andestur.png',
+    apple: '/Logo_andestur.png',
+  },
 }
 
 export default function RootLayout({ children }) {

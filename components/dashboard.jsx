@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { Users, MapPin, Package, Truck, DollarSign, Calendar } from 'lucide-react'
 import { staff, packages, destinations, vehicles, reservations } from '@/lib/api'
 
 export function Dashboard() {
   const [stats, setStats] = useState(null)
+  const [reservationsByMonth, setReservationsByMonth] = useState([])
+  const [reservationsByState, setReservationsByState] = useState([])
 
   useEffect(() => {
     async function loadStats() {
@@ -19,14 +21,48 @@ export function Dashboard() {
           vehicles.getAll(),
           reservations.getAll(),
         ])
+        
+        const resList = resData.data || []
+        
         setStats({
-          totalEmployees: staffData.data.length,
-          totalDestinations: destData.data.length,
-          totalPackages: pkgData.data.length,
-          totalVehicles: vehData.data.length,
-          totalReservations: resData.data.length,
-          activeReservations: resData.data.filter(r => r.pay_state !== 'cancelled').length,
+          totalEmployees: staffData.data?.length || 0,
+          totalDestinations: destData.data?.length || 0,
+          totalPackages: pkgData.data?.length || 0,
+          totalVehicles: vehData.data?.length || 0,
+          totalReservations: resList.length,
+          activeReservations: resList.filter(r => r.pay_state !== 'cancelled' && r.pay_state !== 'expired').length,
         })
+
+        // Procesamiento para Gráfica de Estados (Pie Chart)
+        const stateCounts = { pending: 0, partial: 0, paid: 0, cancelled: 0, expired: 0 }
+        resList.forEach(r => {
+          if (stateCounts[r.pay_state] !== undefined) stateCounts[r.pay_state]++
+        })
+        
+        setReservationsByState([
+          { name: 'Pendiente', value: stateCounts.pending, color: '#F59E0B' }, // amber
+          { name: 'Parcial', value: stateCounts.partial, color: '#3B82F6' }, // blue
+          { name: 'Pagado', value: stateCounts.paid, color: '#10B981' }, // emerald
+          { name: 'Cancelado', value: stateCounts.cancelled, color: '#EF4444' }, // red
+          { name: 'Expirado', value: stateCounts.expired, color: '#6B7280' }, // gray
+        ].filter(item => item.value > 0))
+
+        // Procesamiento para Gráfica de Reservas por Mes (Bar Chart)
+        const monthCounts = {}
+        resList.forEach(r => {
+          const date = new Date(r.reservation_date || r.created_at)
+          // Formato: "Ene 2024"
+          const monthYear = date.toLocaleString('es-ES', { month: 'short', year: 'numeric' }).replace('.', '')
+          monthCounts[monthYear] = (monthCounts[monthYear] || 0) + 1
+        })
+        
+        // Convertir a array y ordenar por fecha (simplificado asumiendo el orden natural)
+        const chartData = Object.keys(monthCounts).map(month => ({
+          month: month.charAt(0).toUpperCase() + month.slice(1), // Capitalizar
+          reservas: monthCounts[month]
+        }))
+        setReservationsByMonth(chartData)
+
       } catch (err) {
         console.error('Error loading dashboard stats:', err)
       }
@@ -50,6 +86,7 @@ export function Dashboard() {
         <p className="text-muted-foreground">Bienvenido al panel administrativo de AndesTur</p>
       </div>
 
+      {/* Tarjetas Superiores */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {statCards.map((stat, index) => {
           const Icon = stat.icon
@@ -70,6 +107,75 @@ export function Dashboard() {
           )
         })}
       </div>
+
+      {/* Sección de Gráficas */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle>Estado de las Reservas</CardTitle>
+            <CardDescription>Distribución porcentual de los estados de pago</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {reservationsByState.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={reservationsByState}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {reservationsByState.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px' }}
+                    labelStyle={{ color: 'var(--foreground)' }}
+                  />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                No hay datos de reservas suficientes
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle>Evolución de Reservas</CardTitle>
+            <CardDescription>Cantidad de reservas creadas por mes</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {reservationsByMonth.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={reservationsByMonth}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
+                  <XAxis dataKey="month" className="text-xs fill-muted-foreground" tickLine={false} axisLine={false} />
+                  <YAxis className="text-xs fill-muted-foreground" tickLine={false} axisLine={false} allowDecimals={false} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px' }}
+                    cursor={{ fill: 'var(--muted)' }}
+                  />
+                  <Bar dataKey="reservas" fill="#0288D1" name="Reservas Nuevas" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                No hay datos de reservas suficientes
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
     </div>
   )
 }

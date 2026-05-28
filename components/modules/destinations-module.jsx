@@ -61,7 +61,8 @@ export function DestinationsModule() {
       setIsCreateOpen(false)
       setNewDestination({ id_municipality: '', name: '', description: '' })
     } catch (err) {
-      console.error('Error creating destination:', err)
+      console.error('Error creating destination:', err, err?.message, err?.stack)
+      alert(err?.message || JSON.stringify(err) || 'Error creando destino')
     } finally {
       setIsSaving(false)
     }

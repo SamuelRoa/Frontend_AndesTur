@@ -16,7 +16,6 @@ export function Sidebar({ activeModule, onModuleChange, onLogout, userEmail }) {
     { id: 'packages', label: 'Paquetes', icon: Package },
     { id: 'vehicles', label: 'Vehículos', icon: Truck },
     { id: 'reservations', label: 'Reservas', icon: Calendar },
-    { id: 'finances', label: 'Finanzas', icon: DollarSign },
   ]
 
   return (
