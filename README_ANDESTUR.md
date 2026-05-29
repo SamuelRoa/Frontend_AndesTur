@@ -155,7 +155,7 @@ GET    /api/finances
 
 ## Librerías Utilizadas
 
-- **Next.js 15**: Framework React con SSR
+- **Vite + React**: Framework React super veloz (SPA)
 - **React 19**: Librería UI
 - **Tailwind CSS 4**: Estilos
 - **shadcn/ui**: Componentes UI pre-estilizados

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <!-- Rounded square background -->
+  <rect x="10" y="10" width="180" height="180" rx="54" fill="#0c6328" />
+  <!-- Compass needle -->
+  <g transform="translate(100, 100) rotate(-45)">
+    <!-- Main white pointer -->
+    <path d="M -40,0 C -40,-12 -20,-26 5,-26 L 65,0 L 5,26 C -20,26 -40,12 -40,0 Z" fill="#ffffff" />
+    <!-- Cutout triangle -->
+    <polygon points="-22,0 2,11 2,-11" fill="#0c6328" />
+  </g>
+</svg>

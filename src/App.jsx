@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { LoginForm } from "@/components/login-form";
@@ -14,7 +12,7 @@ import { ReservationsModule } from "@/components/modules/reservations-module";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/lib/auth";
 
-export default function Home() {
+export default function App() {
   const { user, login, register, logout } = useAuth();
   const { theme, resolvedTheme } = useTheme();
   const [mode, setMode] = useState("login");
@@ -116,7 +114,7 @@ export default function Home() {
         activeModule={activeModule}
         onModuleChange={setActiveModule}
         onLogout={logout}
-        userEmail={user.email}
+        userEmail={user?.email}
       />
       <main className="lg:ml-64 p-8">
         <div className="flex items-center justify-between mb-6">

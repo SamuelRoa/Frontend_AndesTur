@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import Link from 'next/link'
 import { Logo } from '@/components/logo'
 
 export function SignupForm({ onSuccess }) {
@@ -17,6 +17,8 @@ export function SignupForm({ onSuccess }) {
     confirmPassword: '',
   })
   const [error, setError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const handleChange = (e) => {
@@ -116,30 +118,48 @@ export function SignupForm({ onSuccess }) {
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 relative">
             <Label htmlFor="password" className="text-foreground font-medium">Contraseña</Label>
             <Input
               id="password"
               name="password"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
               value={formData.password}
               onChange={handleChange}
-              className="border-border focus:ring-primary"
+              className="border-border focus:ring-primary pr-10"
             />
+            <button
+              type="button"
+              aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-2 top-9 text-muted-foreground hover:text-foreground focus:outline-none"
+              tabIndex={-1}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 relative">
             <Label htmlFor="confirmPassword" className="text-foreground font-medium">Confirmar Contraseña</Label>
             <Input
               id="confirmPassword"
               name="confirmPassword"
-              type="password"
+              type={showConfirmPassword ? 'text' : 'password'}
               placeholder="••••••••"
               value={formData.confirmPassword}
               onChange={handleChange}
-              className="border-border focus:ring-primary"
+              className="border-border focus:ring-primary pr-10"
             />
+            <button
+              type="button"
+              aria-label={showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              onClick={() => setShowConfirmPassword((v) => !v)}
+              className="absolute right-2 top-9 text-muted-foreground hover:text-foreground focus:outline-none"
+              tabIndex={-1}
+            >
+              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
           </div>
 
           <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium" disabled={loading}>
@@ -148,9 +168,9 @@ export function SignupForm({ onSuccess }) {
 
           <div className="text-center text-sm">
             <span className="text-muted-foreground">¿Ya tienes cuenta? </span>
-            <Link href="?mode=login" className="text-primary hover:underline font-medium">
+            <a href="?mode=login" className="text-primary hover:underline font-medium">
               Inicia sesión
-            </Link>
+            </a>
           </div>
         </form>
       </CardContent>

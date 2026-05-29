@@ -1,13 +1,15 @@
 'use client'
 
-import { Users, MapPin, Package, Truck, Calendar, DollarSign, LogOut, Menu, X, LayoutDashboard } from 'lucide-react'
+import { Users, MapPin, Package, Truck, Calendar, DollarSign, LogOut, Menu, X, LayoutDashboard, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { ProfileDialog } from '@/components/profile-dialog'
 import { useState } from 'react'
-import Link from 'next/link'
 import { Logo } from '@/components/logo'
 
-export function Sidebar({ activeModule, onModuleChange, onLogout, userEmail }) {
+export function Sidebar({ activeModule, onModuleChange, onLogout, userEmail, userName }) {
   const [isOpen, setIsOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
 
   const modules = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -66,10 +68,30 @@ export function Sidebar({ activeModule, onModuleChange, onLogout, userEmail }) {
           </nav>
 
           <div className="border-t border-sidebar-border p-4 space-y-3">
-            <div className="px-2 py-2 bg-sidebar-accent rounded-lg">
-              <p className="text-xs text-sidebar-foreground/60">Conectado como</p>
-              <p className="text-sm font-medium text-sidebar-foreground truncate">{userEmail}</p>
+            <div className="flex items-center gap-3 px-2 py-2 bg-sidebar-accent rounded-lg">
+              <button
+                type="button"
+                aria-label="Perfil de usuario"
+                onClick={() => setProfileOpen(true)}
+                className="focus:outline-none"
+              >
+                <Avatar>
+                  <AvatarFallback>
+                    <User className="w-5 h-5" />
+                  </AvatarFallback>
+                </Avatar>
+              </button>
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs text-sidebar-foreground/60">Conectado como</span>
+                <span className="text-sm font-medium text-sidebar-foreground truncate">{userName || userEmail}</span>
+              </div>
             </div>
+            <ProfileDialog
+              open={profileOpen}
+              onClose={() => setProfileOpen(false)}
+              user={{ name: userName, email: userEmail }}
+              onSave={(data) => { /* Aquí puedes manejar la actualización del perfil */ setProfileOpen(false) }}
+            />
             <Button
               onClick={() => {
                 onLogout()

@@ -5,7 +5,8 @@
 
 :root {
   /* AndesTur Original Green Theme - Light Mode */
-  --background: oklch(0.985 0.002 120);
+  /* Hueso/marfil suave: oklch(0.98 0.01 100) */
+  --background: oklch(0.98 0.01 100);
   --foreground: oklch(0.205 0.02 120);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.205 0.02 120);
