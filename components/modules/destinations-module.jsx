@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { destinations } from '@/lib/api'
+import { ExportButton } from '@/components/export-button'
 import { Plus, Edit2, Trash2, Search, MapPin } from 'lucide-react'
 
 export function DestinationsModule() {
@@ -15,6 +16,8 @@ export function DestinationsModule() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [editingDestination, setEditingDestination] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
   const [newDestination, setNewDestination] = useState({
     id_municipality: '',
@@ -45,11 +48,7 @@ export function DestinationsModule() {
 
   const handleCreateDestination = async (event) => {
     event.preventDefault()
-
-    if (!newDestination.id_municipality || !newDestination.name.trim() || !newDestination.description.trim()) {
-      return
-    }
-
+    if (!newDestination.id_municipality || !newDestination.name.trim() || !newDestination.description.trim()) return
     setIsSaving(true)
     try {
       await destinations.create({
@@ -61,10 +60,47 @@ export function DestinationsModule() {
       setIsCreateOpen(false)
       setNewDestination({ id_municipality: '', name: '', description: '' })
     } catch (err) {
-      console.error('Error creating destination:', err, err?.message, err?.stack)
-      alert(err?.message || JSON.stringify(err) || 'Error creando destino')
+      console.error('Error creating destination:', err)
+      alert(err?.message || 'Error creando destino')
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const openEditDialog = (dest) => {
+    setEditingDestination({ ...dest })
+    setIsEditOpen(true)
+  }
+
+  const handleEditDestination = async (event) => {
+    event.preventDefault()
+    if (!editingDestination.id_municipality || !editingDestination.name.trim() || !editingDestination.description.trim()) return
+    setIsSaving(true)
+    try {
+      await destinations.update(editingDestination.id_destination, {
+        id_municipality: Number(editingDestination.id_municipality),
+        name: editingDestination.name.trim(),
+        description: editingDestination.description.trim(),
+      })
+      await loadDestinations()
+      setIsEditOpen(false)
+      setEditingDestination(null)
+    } catch (err) {
+      console.error('Error updating destination:', err)
+      alert(err?.message || 'Error actualizando destino')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleDeleteDestination = async (id) => {
+    if (!confirm('¿Estás seguro de eliminar este destino?')) return
+    try {
+      await destinations.delete(id)
+      await loadDestinations()
+    } catch (err) {
+      console.error('Error deleting destination:', err)
+      alert(err?.message || 'Error eliminando destino')
     }
   }
 
@@ -80,59 +116,58 @@ export function DestinationsModule() {
           <p className="text-muted-foreground mt-1">Gestión de lugares y experiencias</p>
         </div>
 
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto">
-              <Plus className="h-4 w-4 mr-2" />
-              Nuevo Destino
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Nuevo destino</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleCreateDestination} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="destination-name">Nombre del destino</Label>
-                <Input
-                  id="destination-name"
-                  value={newDestination.name}
-                  onChange={(event) => setNewDestination((current) => ({ ...current, name: event.target.value }))}
-                  placeholder="Ej: Páramo la Culata"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="destination-municipality">ID de municipio</Label>
-                <Input
-                  id="destination-municipality"
-                  type="number"
-                  min="1"
-                  value={newDestination.id_municipality}
-                  onChange={(event) => setNewDestination((current) => ({ ...current, id_municipality: event.target.value }))}
-                  placeholder="Ej: 1"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="destination-description">Descripción</Label>
-                <Textarea
-                  id="destination-description"
-                  value={newDestination.description}
-                  onChange={(event) => setNewDestination((current) => ({ ...current, description: event.target.value }))}
-                  placeholder="Describe el destino"
-                  rows={4}
-                />
-              </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={isSaving}>
-                  {isSaving ? 'Guardando...' : 'Crear destino'}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <ExportButton moduleName="destinos" />
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto">
+                <Plus className="h-4 w-4 mr-2" />
+                Nuevo Destino
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Nuevo destino</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleCreateDestination} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="destination-name">Nombre del destino</Label>
+                  <Input
+                    id="destination-name"
+                    value={newDestination.name}
+                    onChange={(event) => setNewDestination((current) => ({ ...current, name: event.target.value }))}
+                    placeholder="Ej: Páramo la Culata"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="destination-municipality">ID de municipio</Label>
+                  <Input
+                    id="destination-municipality"
+                    type="number"
+                    min="1"
+                    value={newDestination.id_municipality}
+                    onChange={(event) => setNewDestination((current) => ({ ...current, id_municipality: event.target.value }))}
+                    placeholder="Ej: 1"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="destination-description">Descripción</Label>
+                  <Textarea
+                    id="destination-description"
+                    value={newDestination.description}
+                    onChange={(event) => setNewDestination((current) => ({ ...current, description: event.target.value }))}
+                    placeholder="Describe el destino"
+                    rows={4}
+                  />
+                </div>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>Cancelar</Button>
+                  <Button type="submit" disabled={isSaving}>{isSaving ? 'Guardando...' : 'Crear destino'}</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="relative">
@@ -161,13 +196,12 @@ export function DestinationsModule() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-foreground">{dest.description}</p>
-
               <div className="flex gap-2 pt-4 border-t border-border">
-                <Button variant="outline" size="sm" className="flex-1 border-border">
+                <Button variant="outline" size="sm" className="flex-1 border-border" onClick={() => openEditDialog(dest)}>
                   <Edit2 className="h-4 w-4 mr-1" />
                   Editar
                 </Button>
-                <Button variant="outline" size="sm" className="flex-1 border-border text-destructive hover:bg-destructive/10">
+                <Button variant="outline" size="sm" className="flex-1 border-border text-destructive hover:bg-destructive/10" onClick={() => handleDeleteDestination(dest.id_destination)}>
                   <Trash2 className="h-4 w-4 mr-1" />
                   Eliminar
                 </Button>
@@ -176,15 +210,56 @@ export function DestinationsModule() {
           </Card>
         ))}
         {filteredDestinations.length === 0 && (
-          <div className="col-span-full text-center text-muted-foreground py-8">
-            No se encontraron destinos
-          </div>
+          <div className="col-span-full text-center text-muted-foreground py-8">No se encontraron destinos</div>
         )}
       </div>
 
       <div className="text-sm text-muted-foreground">
         Mostrando {filteredDestinations.length} de {destinationsList.length} destinos
       </div>
+
+      <Dialog open={isEditOpen} onOpenChange={(open) => { if (!open) { setIsEditOpen(false); setEditingDestination(null); } }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Editar destino</DialogTitle>
+          </DialogHeader>
+          {editingDestination && (
+            <form onSubmit={handleEditDestination} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-destination-name">Nombre del destino</Label>
+                <Input
+                  id="edit-destination-name"
+                  value={editingDestination.name}
+                  onChange={(event) => setEditingDestination((current) => ({ ...current, name: event.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-destination-municipality">ID de municipio</Label>
+                <Input
+                  id="edit-destination-municipality"
+                  type="number"
+                  min="1"
+                  value={editingDestination.id_municipality}
+                  onChange={(event) => setEditingDestination((current) => ({ ...current, id_municipality: event.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-destination-description">Descripción</Label>
+                <Textarea
+                  id="edit-destination-description"
+                  value={editingDestination.description}
+                  onChange={(event) => setEditingDestination((current) => ({ ...current, description: event.target.value }))}
+                  rows={4}
+                />
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => { setIsEditOpen(false); setEditingDestination(null); }}>Cancelar</Button>
+                <Button type="submit" disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar cambios'}</Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

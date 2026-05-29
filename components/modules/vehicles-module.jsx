@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { vehicles } from '@/lib/api'
+import { ExportButton } from '@/components/export-button'
 import { Plus, Edit2, Trash2, Search, Wrench } from 'lucide-react'
 
 export function VehiclesModule() {
@@ -14,6 +15,8 @@ export function VehiclesModule() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [editingVehicle, setEditingVehicle] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
   const [newVehicle, setNewVehicle] = useState({
     plate: '',
@@ -46,11 +49,7 @@ export function VehiclesModule() {
 
   const handleCreateVehicle = async (event) => {
     event.preventDefault()
-
-    if (!newVehicle.plate || !newVehicle.capacity) {
-      return
-    }
-
+    if (!newVehicle.plate || !newVehicle.capacity) return
     setIsSaving(true)
     try {
       await vehicles.create({
@@ -65,8 +64,48 @@ export function VehiclesModule() {
       setNewVehicle({ plate: '', brand: '', model: '', capacity: '', status: 'active' })
     } catch (err) {
       console.error('Error creating vehicle:', err)
+      alert(err?.message || 'Error creando vehículo')
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const openEditDialog = (veh) => {
+    setEditingVehicle({ ...veh })
+    setIsEditOpen(true)
+  }
+
+  const handleEditVehicle = async (event) => {
+    event.preventDefault()
+    if (!editingVehicle.plate || !editingVehicle.capacity) return
+    setIsSaving(true)
+    try {
+      await vehicles.update(editingVehicle.id_vehicle, {
+        plate: editingVehicle.plate.toUpperCase().trim(),
+        brand: editingVehicle.brand?.trim() || undefined,
+        model: editingVehicle.model?.trim() || undefined,
+        capacity: Number(editingVehicle.capacity),
+        status: editingVehicle.status?.trim() || 'active',
+      })
+      await loadVehicles()
+      setIsEditOpen(false)
+      setEditingVehicle(null)
+    } catch (err) {
+      console.error('Error updating vehicle:', err)
+      alert(err?.message || 'Error actualizando vehículo')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleDeleteVehicle = async (id) => {
+    if (!confirm('¿Estás seguro de eliminar este vehículo?')) return
+    try {
+      await vehicles.delete(id)
+      await loadVehicles()
+    } catch (err) {
+      console.error('Error deleting vehicle:', err)
+      alert(err?.message || 'Error eliminando vehículo')
     }
   }
 
@@ -82,90 +121,56 @@ export function VehiclesModule() {
           <p className="text-muted-foreground mt-1">Gestión de flota y mantenimiento</p>
         </div>
 
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto">
-              <Plus className="h-4 w-4 mr-2" />
-              Nuevo Vehículo
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Nuevo vehículo</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleCreateVehicle} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="vehicle-plate">Placa</Label>
-                <Input
-                  id="vehicle-plate"
-                  value={newVehicle.plate}
-                  onChange={(event) => setNewVehicle((current) => ({ ...current, plate: event.target.value }))}
-                  placeholder="Ej: ANDES-001"
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <ExportButton moduleName="vehiculos" />
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto">
+                <Plus className="h-4 w-4 mr-2" /> Nuevo Vehículo
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Nuevo vehículo</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleCreateVehicle} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="vehicle-brand">Marca</Label>
-                  <Input
-                    id="vehicle-brand"
-                    value={newVehicle.brand}
-                    onChange={(event) => setNewVehicle((current) => ({ ...current, brand: event.target.value }))}
-                    placeholder="Toyota"
-                  />
+                  <Label htmlFor="vehicle-plate">Placa</Label>
+                  <Input id="vehicle-plate" value={newVehicle.plate} onChange={(e) => setNewVehicle((c) => ({ ...c, plate: e.target.value }))} placeholder="Ej: ANDES-001" />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="vehicle-model">Modelo</Label>
-                  <Input
-                    id="vehicle-model"
-                    value={newVehicle.model}
-                    onChange={(event) => setNewVehicle((current) => ({ ...current, model: event.target.value }))}
-                    placeholder="Coaster"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="vehicle-brand">Marca</Label>
+                    <Input id="vehicle-brand" value={newVehicle.brand} onChange={(e) => setNewVehicle((c) => ({ ...c, brand: e.target.value }))} placeholder="Toyota" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="vehicle-model">Modelo</Label>
+                    <Input id="vehicle-model" value={newVehicle.model} onChange={(e) => setNewVehicle((c) => ({ ...c, model: e.target.value }))} placeholder="Coaster" />
+                  </div>
                 </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="vehicle-capacity">Capacidad</Label>
-                  <Input
-                    id="vehicle-capacity"
-                    type="number"
-                    min="1"
-                    value={newVehicle.capacity}
-                    onChange={(event) => setNewVehicle((current) => ({ ...current, capacity: event.target.value }))}
-                    placeholder="22"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="vehicle-capacity">Capacidad</Label>
+                    <Input id="vehicle-capacity" type="number" min="1" value={newVehicle.capacity} onChange={(e) => setNewVehicle((c) => ({ ...c, capacity: e.target.value }))} placeholder="22" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="vehicle-status">Estado</Label>
+                    <Input id="vehicle-status" value={newVehicle.status} onChange={(e) => setNewVehicle((c) => ({ ...c, status: e.target.value }))} placeholder="active" />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="vehicle-status">Estado</Label>
-                  <Input
-                    id="vehicle-status"
-                    value={newVehicle.status}
-                    onChange={(event) => setNewVehicle((current) => ({ ...current, status: event.target.value }))}
-                    placeholder="active"
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={isSaving}>
-                  {isSaving ? 'Guardando...' : 'Crear vehículo'}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>Cancelar</Button>
+                  <Button type="submit" disabled={isSaving}>{isSaving ? 'Guardando...' : 'Crear vehículo'}</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="relative">
         <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por placa o modelo..."
-          value={searchTerm}
-          onChange={(event) => setSearchTerm(event.target.value)}
-          className="pl-10 border-border"
-        />
+        <Input placeholder="Buscar por placa o modelo..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 border-border" />
       </div>
 
       <Card className="border-border overflow-hidden">
@@ -184,7 +189,6 @@ export function VehiclesModule() {
             <tbody className="divide-y divide-border">
               {filteredVehicles.map((veh) => {
                 const isActive = veh.status === 'true' || veh.status === 'active'
-
                 return (
                   <tr key={veh.id_vehicle} className="hover:bg-muted/50 transition-colors">
                     <td className="px-6 py-4 text-sm font-medium text-primary">{veh.plate}</td>
@@ -204,10 +208,10 @@ export function VehiclesModule() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right space-x-2 flex justify-end">
-                      <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10">
+                      <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10" onClick={() => openEditDialog(veh)}>
                         <Edit2 className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10">
+                      <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10" onClick={() => handleDeleteVehicle(veh.id_vehicle)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </td>
@@ -216,9 +220,7 @@ export function VehiclesModule() {
               })}
               {filteredVehicles.length === 0 && (
                 <tr>
-                  <td colSpan="6" className="px-6 py-8 text-center text-muted-foreground">
-                    No se encontraron vehículos
-                  </td>
+                  <td colSpan="6" className="px-6 py-8 text-center text-muted-foreground">No se encontraron vehículos</td>
                 </tr>
               )}
             </tbody>
@@ -226,9 +228,47 @@ export function VehiclesModule() {
         </div>
       </Card>
 
-      <div className="text-sm text-muted-foreground">
-        Mostrando {filteredVehicles.length} de {vehicleList.length} vehículos
-      </div>
+      <div className="text-sm text-muted-foreground">Mostrando {filteredVehicles.length} de {vehicleList.length} vehículos</div>
+
+      <Dialog open={isEditOpen} onOpenChange={(open) => { if (!open) { setIsEditOpen(false); setEditingVehicle(null); } }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Editar vehículo</DialogTitle>
+          </DialogHeader>
+          {editingVehicle && (
+            <form onSubmit={handleEditVehicle} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-vehicle-plate">Placa</Label>
+                <Input id="edit-vehicle-plate" value={editingVehicle.plate} onChange={(e) => setEditingVehicle((c) => ({ ...c, plate: e.target.value }))} />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-vehicle-brand">Marca</Label>
+                  <Input id="edit-vehicle-brand" value={editingVehicle.brand || ''} onChange={(e) => setEditingVehicle((c) => ({ ...c, brand: e.target.value }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-vehicle-model">Modelo</Label>
+                  <Input id="edit-vehicle-model" value={editingVehicle.model || ''} onChange={(e) => setEditingVehicle((c) => ({ ...c, model: e.target.value }))} />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-vehicle-capacity">Capacidad</Label>
+                  <Input id="edit-vehicle-capacity" type="number" min="1" value={editingVehicle.capacity} onChange={(e) => setEditingVehicle((c) => ({ ...c, capacity: e.target.value }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-vehicle-status">Estado</Label>
+                  <Input id="edit-vehicle-status" value={editingVehicle.status || 'active'} onChange={(e) => setEditingVehicle((c) => ({ ...c, status: e.target.value }))} />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => { setIsEditOpen(false); setEditingVehicle(null); }}>Cancelar</Button>
+                <Button type="submit" disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar cambios'}</Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

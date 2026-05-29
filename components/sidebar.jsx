@@ -7,7 +7,7 @@ import { ProfileDialog } from '@/components/profile-dialog'
 import { useState } from 'react'
 import { Logo } from '@/components/logo'
 
-export function Sidebar({ activeModule, onModuleChange, onLogout, userEmail, userName }) {
+export function Sidebar({ activeModule, onModuleChange, onLogout, userEmail, userName, onProfileUpdate }) {
   const [isOpen, setIsOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
 
@@ -89,8 +89,8 @@ export function Sidebar({ activeModule, onModuleChange, onLogout, userEmail, use
             <ProfileDialog
               open={profileOpen}
               onClose={() => setProfileOpen(false)}
-              user={{ name: userName, email: userEmail }}
-              onSave={(data) => { /* Aquí puedes manejar la actualización del perfil */ setProfileOpen(false) }}
+              user={{ username: userName, email: userEmail }}
+              onSave={(data) => { setProfileOpen(false); if (onProfileUpdate) onProfileUpdate(data) }}
             />
             <Button
               onClick={() => {

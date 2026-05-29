@@ -1,189 +1,305 @@
-# AndesTur - Sistema Administrativo de Agencia Turística
+# AndesTur — Sistema Administrativo de Agencia Turística
 
-Panel administrativo completo para la gestión de agencias turísticas con soporte para tema claro y oscuro totalmente funcional.
-
-## Características
-
-✅ **Autenticación**: Sistema de login y registro completo  
-✅ **Dashboard**: Panel de control con estadísticas y gráficos interactivos  
-✅ **Gestión de Empleados**: Nómina, posiciones y datos del personal  
-✅ **Destinos Turísticos**: Administración de lugares y experiencias  
-✅ **Paquetes**: Ofertas con precios y disponibilidad  
-✅ **Flota de Vehículos**: Gestión de transportes y mantenimiento  
-✅ **Reservas**: Sistema de reservaciones con estados de pago  
-✅ **Finanzas**: Análisis de ingresos, gastos y rentabilidad  
-✅ **Tema Claro/Oscuro**: Toggle funcional con persistencia  
-✅ **Diseño Responsive**: Interfaz mobile-first  
-
-## Credenciales de Demo
-
-Haz clic en cualquier credencial para pre-rellenar automáticamente los campos:
-
-### Administrador
-```
-Email: admin@andetur.com
-Contraseña: admin123
-Rol: Acceso completo
-```
-
-### Gerente
-```
-Email: manager@andetur.com
-Contraseña: manager123
-Rol: Gestión operacional
-```
-
-### Usuario
-```
-Email: usuario@andetur.com
-Contraseña: user123
-Rol: Visualización
-```
-
-## Cómo Usar
-
-1. **Abre** http://localhost:3000
-2. **Haz clic en una credencial de demo** para pre-rellenar automáticamente el formulario
-3. **O ingresa manualmente** un email y contraseña válida
-4. **Haz clic en "Ingresar al Sistema"**
-5. **Explora los módulos** desde el sidebar izquierdo
-6. **Cambiar tema**: Haz clic en el icono Sol/Luna (esquina superior derecha)
-
-## Paleta de Colores (AndesTur Brand)
-
-### Light Mode
-- **Fondo**: Blanco (#FFFFFF)
-- **Texto**: Gris Pizarra (#1E293B)
-- **Primario**: Verde Páramo (#1B5E20)
-- **Secundario**: Azul Laguna (#0277BD)
-- **Muted**: Verde Neblina (#E8F5E9)
-
-### Dark Mode
-- **Fondo**: Azul Noche (#0F172A)
-- **Texto**: Blanco Nieve (#F1F5F9)
-- **Primario**: Verde Claro (#2E7D32)
-- **Secundario**: Azul Cielo (#0288D1)
-- **Muted**: Gris Oscuro (#0F172A)
-
-## Tipografía
-
-- **Serif (Identidad)**: Merriweather Bold and Regular (Anthropic style)
-- **Sans-Serif (Sistema)**: Inter Regular
-
-## Estructura del Proyecto
-
-```
-app/
-├── page.tsx                 # Página principal con autenticación
-├── layout.tsx              # Layout raíz con soporte de temas
-└── globals.css             # Estilos globales y definición de temas
-
-components/
-├── theme-provider.tsx      # Proveedor de temas
-├── theme-toggle.tsx        # Botón para cambiar tema (Sun/Moon)
-├── login-form.tsx          # Formulario de login con credenciales de demo
-├── signup-form.tsx         # Formulario de registro
-├── sidebar.tsx             # Navegación lateral inteligente
-├── dashboard.tsx           # Panel de control principal
-└── modules/
-    ├── employees-module.tsx
-    ├── destinations-module.tsx
-    ├── packages-module.tsx
-    ├── vehicles-module.tsx
-    ├── reservations-module.tsx
-    └── finances-module.tsx
-
-lib/
-└── mock-data.ts            # Datos simulados para demostración
-```
-
-## Tema Claro/Oscuro
-
-### Cómo Funciona
-- **Toggle automático**: El botón en la esquina superior derecha cambia entre modo claro y oscuro
-- **Icono dinámico**: 
-  - 🌙 (Luna) = Modo Claro activo, click para cambiar a Oscuro
-  - ☀️ (Sol) = Modo Oscuro activo, click para cambiar a Claro
-- **Persistencia**: El tema se guarda automáticamente en localStorage
-
-### Soporte Completo
-- ✅ Login y Signup
-- ✅ Dashboard y estadísticas
-- ✅ Todos los módulos
-- ✅ Sidebar y navegación
-- ✅ Gráficos adaptativos
-
-## Instrucciones de Desarrollo
-
-### Iniciar servidor
-```bash
-pnpm dev
-```
-
-### Build para producción
-```bash
-pnpm build
-pnpm start
-```
-
-## Próximos Pasos para Integración Backend
-
-### 1. Autenticación
-Reemplaza la lógica mock en:
-- `components/login-form.tsx`
-- `components/signup-form.tsx`
-
-Con llamadas a tu API de autenticación
-
-### 2. Base de Datos
-Conecta Supabase o tu base de datos preferida:
-- Actualiza `lib/mock-data.ts` con llamadas API
-- Implementa CRUD en cada módulo
-
-### 3. API Endpoints Recomendados
-```
-POST   /api/auth/login
-POST   /api/auth/signup
-GET    /api/employees
-POST   /api/employees
-GET    /api/destinations
-GET    /api/packages
-GET    /api/vehicles
-GET    /api/reservations
-GET    /api/finances
-```
-
-## Librerías Utilizadas
-
-- **Vite + React**: Framework React super veloz (SPA)
-- **React 19**: Librería UI
-- **Tailwind CSS 4**: Estilos
-- **shadcn/ui**: Componentes UI pre-estilizados
-- **Recharts**: Gráficos y visualizaciones
-- **Lucide React**: Iconos vectoriales
-- **next-themes**: Gestión de temas claro/oscuro
-- **TypeScript**: Tipado estático
-
-## Datos Mock
-
-El sistema incluye datos simulados pre-cargados:
-- 5 Empleados con información completa
-- 5 Destinos turísticos con coordenadas GPS
-- 5 Paquetes con precios y disponibilidad
-- 5 Vehículos con especificaciones
-- 5 Reservas con estados de pago
-- 6 meses de datos financieros
-
-## Notas Importantes
-
-- El sistema actualmente usa datos mock (`lib/mock-data.ts`)
-- Todos los formularios tienen validación básica frontend
-- El tema se persiste en localStorage automáticamente
-- El sidebar es responsive y se colapsa en móvil
-- Los gráficos se actualizan según el tema automáticamente
+Panel administrativo full-stack para la gestión de agencias turísticas, con frontend React + Vite y backend Express + Sequelize + PostgreSQL (Supabase).
 
 ---
 
-**AndesTur © 2026** - Sistema Administrativo de Agencia Turística  
-**Versión**: 1.0.0  
-**Última actualización**: Mayo 2026
+## Arquitectura
+
+```
+┌─────────────────────────────────────────────────────┐
+│  AndesTur_panel (Frontend)                          │
+│  Vite + React 19 + Tailwind CSS 4 + shadcn/ui      │
+│  Puerto: 5173 (dev)                                 │
+├─────────────────────────────────────────────────────┤
+│         ↓ API REST (HTTP)                           │
+├─────────────────────────────────────────────────────┤
+│  Backend_AndesTur-master (Backend)                  │
+│  Express 5 + Sequelize ORM + JWT                    │
+│  Puerto: 3000                                       │
+├─────────────────────────────────────────────────────┤
+│         ↓ Sequelize                                 │
+├─────────────────────────────────────────────────────┤
+│  PostgreSQL (Supabase Pooler :6543)                 │
+└─────────────────────────────────────────────────────┘
+```
+
+---
+
+## Stack Tecnológico
+
+### Frontend
+| Tecnología | Versión | Uso |
+|---|---|---|
+| Vite | 8.x | Build tool / dev server |
+| React | 19 | UI library |
+| Tailwind CSS | 4.x | Estilos utilitarios |
+| shadcn/ui | — | Componentes pre-estilizados (Radix UI) |
+| Recharts | 2.x | Gráficos del dashboard |
+| Lucide React | 0.564 | Iconos vectoriales |
+| next-themes | 0.4 | Toggle claro/oscuro |
+
+### Backend
+| Tecnología | Versión | Uso |
+|---|---|---|
+| Express | 5 | Framework HTTP |
+| Sequelize | — | ORM para PostgreSQL |
+| PostgreSQL | — | Base de datos (Supabase) |
+| JWT | — | Autenticación por token |
+| bcrypt | — | Hash de contraseñas |
+| Zod | — | Validación de schemas |
+| Swagger | — | Documentación de API |
+
+---
+
+## Módulos del Sistema (Frontend)
+
+### 1. Dashboard
+- `components/dashboard.jsx`
+- Gráficos interactivos con Recharts
+- Estadísticas de empleados, destinos, paquetes, vehículos, reservas
+
+### 2. Empleados — `EmployeesModule`
+- `components/modules/employees-module.jsx`
+- CRUD completo: crear, listar, editar, eliminar
+- Exportación (PDF / TXT / Excel — UI placeholder)
+- Búsqueda por nombre, email, DNI, cargo
+
+### 3. Destinos — `DestinationsModule`
+- `components/modules/destinations-module.jsx`
+- CRUD completo + exportación
+- Búsqueda por nombre, ubicación, descripción
+
+### 4. Paquetes — `PackagesModule`
+- `components/modules/packages-module.jsx`
+- CRUD completo + exportación
+- Búsqueda por nombre, descripción
+
+### 5. Vehículos — `VehiclesModule`
+- `components/modules/vehicles-module.jsx`
+- CRUD completo + exportación
+- Búsqueda por placa, marca, modelo
+
+### 6. Reservas — `ReservationsModule`
+- `components/modules/reservations-module.jsx`
+- CRUD completo + exportación
+- Búsqueda por cliente, email, paquete
+- Estados de pago: Pendiente, Parcial, Pagado, Cancelado, Expirado
+
+### 7. Barra de Búsqueda Global
+- `components/global-search.jsx`
+- Busca en todos los módulos simultáneamente (empleados, destinos, paquetes, vehículos, reservas, clientes)
+- Dropdown con resultados agrupados
+- Navegación directa al módulo al hacer clic
+- Atajos: ↑/↓ para navegar resultados, Enter para seleccionar, Escape para cerrar
+
+---
+
+## Componentes Compartidos
+
+| Componente | Archivo | Propósito |
+|---|---|---|
+| Sidebar | `components/sidebar.jsx` | Navegación lateral fija (w-64), responsive |
+| ProfileDialog | `components/profile-dialog.jsx` | 3 tabs: Perfil, Contraseña, Redes Sociales |
+| ThemeToggle | `components/theme-toggle.jsx` | Switch claro/oscuro |
+| ExportButton | `components/export-button.jsx` | Dropdown de exportación (PDF/TXT/Excel) |
+| LoginForm | `components/login-form.jsx` | Formulario de inicio de sesión |
+| SignupForm | `components/signup-form.jsx` | Formulario de registro |
+| GlobalSearch | `components/global-search.jsx` | Búsqueda global en todos los módulos |
+
+---
+
+## API Backend — Endpoints
+
+### Autenticación
+| Método | Endpoint | Descripción |
+|---|---|---|
+| POST | `/api/auth/login` | Iniciar sesión |
+| POST | `/api/auth/register` | Registrar usuario |
+| GET | `/api/auth/verify` | Verificar token |
+| POST | `/api/auth/forgot-password` | Recuperar contraseña |
+| POST | `/api/auth/change-password` | Cambiar contraseña (autenticado) |
+
+### Usuarios
+| Método | Endpoint | Descripción |
+|---|---|---|
+| PUT | `/api/users/profile_update` | Actualizar perfil (username, email) |
+
+### Staff (Empleados)
+| Método | Endpoint | Descripción |
+|---|---|---|
+| GET | `/api/staff` | Listar todos |
+| GET | `/api/staff/:id` | Obtener por ID |
+| POST | `/api/staff` | Crear |
+| PUT | `/api/staff/:id` | Actualizar |
+| DELETE | `/api/staff/:id` | Eliminar |
+
+### Paquetes
+| Método | Endpoint | Descripción |
+|---|---|---|
+| GET | `/api/packages` | Listar todos |
+| GET | `/api/packages/:id` | Obtener por ID |
+| POST | `/api/packages` | Crear |
+| PUT | `/api/packages/:id` | Actualizar |
+| DELETE | `/api/packages/:id` | Eliminar |
+
+### Destinos
+| Método | Endpoint | Descripción |
+|---|---|---|
+| GET | `/api/destinations` | Listar todos |
+| GET | `/api/destinations/:id` | Obtener por ID |
+| POST | `/api/destinations` | Crear |
+| PUT | `/api/destinations/:id` | Actualizar |
+| DELETE | `/api/destinations/:id` | Eliminar |
+
+### Reservas
+| Método | Endpoint | Descripción |
+|---|---|---|
+| GET | `/api/reservations` | Listar todas |
+| GET | `/api/reservations/:id` | Obtener por ID |
+| POST | `/api/reservations` | Crear |
+| PUT | `/api/reservations/:id` | Actualizar |
+| DELETE | `/api/reservations/:id` | Eliminar |
+
+### Vehículos
+| Método | Endpoint | Descripción |
+|---|---|---|
+| GET | `/api/vehicles` | Listar todos |
+| GET | `/api/vehicles/:id` | Obtener por ID |
+| POST | `/api/vehicles` | Crear |
+| PUT | `/api/vehicles/:id` | Actualizar |
+| DELETE | `/api/vehicles/:id` | Eliminar |
+
+### Clientes
+| Método | Endpoint | Descripción |
+|---|---|---|
+| GET | `/api/customers` | Listar todos |
+| GET | `/api/customers/:id` | Obtener por ID |
+| POST | `/api/customers` | Crear |
+| PUT | `/api/customers/:id` | Actualizar |
+| DELETE | `/api/customers/:id` | Eliminar |
+
+### Payment Headers
+| Método | Endpoint | Descripción |
+|---|---|---|
+| GET | `/api/payment-headers` | Listar todos |
+| GET | `/api/payment-headers/:id` | Obtener por ID |
+| POST | `/api/payment-headers` | Crear |
+| PUT | `/api/payment-headers/:id` | Actualizar |
+| DELETE | `/api/payment-headers/:id` | Eliminar |
+
+> **Total: 32 endpoints** en 8 grupos (auth, users, staff, packages, destinations, reservations, vehicles, customers, payment-headers).
+
+---
+
+## Manejo de Errores (Backend)
+
+Todos los controladores (`src/controllers/*.controller.js`) propagan errores a un middleware centralizado:
+
+```
+controller → next(error) → errorHandler.middleware.js
+```
+
+El middleware clasifica errores Sequelize:
+- **UniqueConstraintError** → HTTP 409 (Conflict)
+- **ValidationError** → HTTP 400 (Bad Request)
+- **ForeignKeyConstraintError** → HTTP 400
+- **Otros** → HTTP 500
+
+---
+
+## Tema Claro / Oscuro
+
+Definido en `styles/globals.css` usando OKLCH:
+
+| Modo | Fondo | Card | Sidebar | Acento |
+|---|---|---|---|---|
+| Claro | Ivory `oklch(0.965 0.008 100)` | Hueso `oklch(0.98 0.006 100)` | Ivory `oklch(0.935 0.008 100)` | Verde Páramo |
+| Oscuro | Navy `oklch(0.17 0.02 250)` | Navy `oklch(0.21 0.025 250)` | Navy profundo `oklch(0.19 0.025 250)` | Verde |
+
+---
+
+## Estructura del Proyecto (Frontend)
+
+```
+AndesTur_panel/
+├── src/
+│   ├── App.jsx                  # Layout principal, ruteo de módulos
+│   └── ...
+├── components/
+│   ├── ui/                      # shadcn/ui components
+│   ├── modules/
+│   │   ├── employees-module.jsx
+│   │   ├── destinations-module.jsx
+│   │   ├── packages-module.jsx
+│   │   ├── vehicles-module.jsx
+│   │   └── reservations-module.jsx
+│   ├── sidebar.jsx
+│   ├── dashboard.jsx
+│   ├── login-form.jsx
+│   ├── signup-form.jsx
+│   ├── profile-dialog.jsx
+│   ├── export-button.jsx
+│   └── global-search.jsx
+├── lib/
+│   ├── api.js                   # Cliente HTTP (fetch + Bearer token)
+│   └── auth.js                  # Hook useAuth (context + localStorage)
+├── styles/
+│   └── globals.css              # Variables CSS, temas claro/oscuro
+├── package.json
+└── vite.config.mjs
+```
+
+---
+
+## Cómo Empezar
+
+### 1. Backend
+```bash
+cd Backend_AndesTur-master
+npm install
+# Configurar .env (ver CREDENCIALES.txt para Supabase)
+npm run dev        # Inicia en http://localhost:3000
+```
+
+### 2. Frontend
+```bash
+cd AndesTur_panel
+pnpm install
+pnpm dev           # Inicia en http://localhost:5173
+```
+
+### 3. Variables de Entorno
+```env
+# AndesTur_panel/.env.local
+VITE_API_URL=http://localhost:3000
+```
+
+---
+
+## Features Completadas
+
+- ✅ Autenticación JWT (login, registro, cambio de contraseña)
+- ✅ CRUD completo en los 5 módulos principales
+- ✅ Perfil de usuario con edición y cambio de contraseña
+- ✅ Búsqueda local en cada módulo
+- ✅ Búsqueda global en todos los módulos desde el navbar
+- ✅ Exportación (UI placeholder: PDF / TXT / Excel)
+- ✅ Tema claro/oscuro con persistencia
+- ✅ Sidebar responsive (colapsable en mobile)
+- ✅ Manejo centralizado de errores del backend
+- ✅ Dashboard con gráficos y estadísticas
+
+---
+
+## Credenciales Demo
+
+```
+Admin:    admin@andetur.com / admin123
+Gerente:  manager@andetur.com / manager123
+Usuario:  usuario@andetur.com / user123
+```
+
+---
+
+**AndesTur © 2026** — Versión 2.0.0 — Última actualización: Mayo 2026

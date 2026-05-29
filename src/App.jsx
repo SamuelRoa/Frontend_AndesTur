@@ -10,6 +10,7 @@ import { PackagesModule } from "@/components/modules/packages-module";
 import { VehiclesModule } from "@/components/modules/vehicles-module";
 import { ReservationsModule } from "@/components/modules/reservations-module";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { GlobalSearch } from "@/components/global-search";
 import { useAuth } from "@/lib/auth";
 
 export default function App() {
@@ -59,7 +60,7 @@ export default function App() {
   const authBackground =
     currentTheme === "dark"
       ? "linear-gradient(rgba(3, 7, 18, 0.66), rgba(3, 7, 18, 0.86)), url(/Laguna_de_Mucubaj%C3%AD,_Merida,_Venezuela.jpg)"
-      : "linear-gradient(rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.45)), url(/Laguna_de_Mucubaj%C3%AD,_Merida,_Venezuela.jpg)";
+      : "linear-gradient(rgba(248, 244, 235, 0.55), rgba(248, 244, 235, 0.85)), url(/Laguna_de_Mucubaj%C3%AD,_Merida,_Venezuela.jpg)";
 
   if (!user) {
     return (
@@ -115,12 +116,18 @@ export default function App() {
         onModuleChange={setActiveModule}
         onLogout={logout}
         userEmail={user?.email}
+        userName={user?.username}
+        onProfileUpdate={(data) => {
+          const updated = { ...user, ...data };
+          localStorage.setItem('auth_user', JSON.stringify(updated));
+        }}
       />
       <main className="lg:ml-64 p-8">
-        <div className="flex items-center justify-between mb-6">
-          <p className="text-sm text-muted-foreground capitalize">
+        <div className="flex items-center justify-between mb-6 gap-4">
+          <p className="text-sm text-muted-foreground capitalize shrink-0">
             {activeModule === "dashboard" ? "Dashboard" : activeModule}
           </p>
+          <GlobalSearch onNavigate={setActiveModule} />
           <ThemeToggle />
         </div>
         {renderModule()}

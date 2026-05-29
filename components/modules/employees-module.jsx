@@ -21,6 +21,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { staff } from "@/lib/api";
+import { ExportButton } from "@/components/export-button";
 import { Plus, Edit2, Trash2, Search } from "lucide-react";
 
 export function EmployeesModule() {
@@ -28,6 +29,8 @@ export function EmployeesModule() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [newEmployee, setNewEmployee] = useState({
     name: "",
@@ -59,11 +62,7 @@ export function EmployeesModule() {
 
   const handleCreateEmployee = async (event) => {
     event.preventDefault();
-
-    if (!newEmployee.name || !newEmployee.last_name || !newEmployee.dni) {
-      return;
-    }
-
+    if (!newEmployee.name || !newEmployee.last_name || !newEmployee.dni) return;
     setIsSaving(true);
     try {
       await staff.create({
@@ -77,8 +76,47 @@ export function EmployeesModule() {
       setNewEmployee({ name: "", last_name: "", dni: "", type: "guide" });
     } catch (err) {
       console.error("Error creating staff:", err);
+      alert(err?.message || "Error creando empleado");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const openEditDialog = (emp) => {
+    setEditingEmployee({ ...emp });
+    setIsEditOpen(true);
+  };
+
+  const handleEditEmployee = async (event) => {
+    event.preventDefault();
+    if (!editingEmployee.name || !editingEmployee.last_name || !editingEmployee.dni) return;
+    setIsSaving(true);
+    try {
+      await staff.update(editingEmployee.id_staff, {
+        name: editingEmployee.name.trim(),
+        last_name: editingEmployee.last_name.trim(),
+        dni: editingEmployee.dni.trim(),
+        type: editingEmployee.type,
+      });
+      await loadEmployees();
+      setIsEditOpen(false);
+      setEditingEmployee(null);
+    } catch (err) {
+      console.error("Error updating staff:", err);
+      alert(err?.message || "Error actualizando empleado");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteEmployee = async (id) => {
+    if (!confirm("¿Estás seguro de eliminar este empleado?")) return;
+    try {
+      await staff.delete(id);
+      await loadEmployees();
+    } catch (err) {
+      console.error("Error deleting staff:", err);
+      alert(err?.message || "Error eliminando empleado");
     }
   };
 
@@ -102,13 +140,15 @@ export function EmployeesModule() {
           </p>
         </div>
 
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto">
-              <Plus className="h-4 w-4 mr-2" />
-              Nuevo Empleado
-            </Button>
-          </DialogTrigger>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <ExportButton moduleName="empleados" />
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto">
+                <Plus className="h-4 w-4 mr-2" />
+                Nuevo Empleado
+              </Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>Nuevo empleado</DialogTitle>
@@ -144,7 +184,6 @@ export function EmployeesModule() {
                   />
                 </div>
               </div>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="employee-dni">DNI</Label>
@@ -178,13 +217,8 @@ export function EmployeesModule() {
                   </Select>
                 </div>
               </div>
-
               <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsCreateOpen(false)}
-                >
+                <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
                   Cancelar
                 </Button>
                 <Button type="submit" disabled={isSaving}>
@@ -194,6 +228,7 @@ export function EmployeesModule() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="relative">
@@ -211,45 +246,22 @@ export function EmployeesModule() {
           <table className="w-full">
             <thead className="bg-muted border-b border-border">
               <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
-                  Nombre
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
-                  Apellido
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
-                  DNI
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
-                  Tipo
-                </th>
-                <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">
-                  Acciones
-                </th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Nombre</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Apellido</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">DNI</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Tipo</th>
+                <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {filteredEmployees.map((emp) => (
-                <tr
-                  key={emp.id_staff}
-                  className="hover:bg-muted/50 transition-colors"
-                >
-                  <td className="px-6 py-4 text-sm font-medium text-foreground">
-                    {emp.name}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">
-                    {emp.last_name}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-foreground">
-                    {emp.dni}
-                  </td>
+                <tr key={emp.id_staff} className="hover:bg-muted/50 transition-colors">
+                  <td className="px-6 py-4 text-sm font-medium text-foreground">{emp.name}</td>
+                  <td className="px-6 py-4 text-sm text-muted-foreground">{emp.last_name}</td>
+                  <td className="px-6 py-4 text-sm text-foreground">{emp.dni}</td>
                   <td className="px-6 py-4 text-sm">
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                      {emp.type === "guide"
-                        ? "Guía"
-                        : emp.type === "driver"
-                          ? "Conductor"
-                          : emp.type}
+                      {emp.type === "guide" ? "Guía" : emp.type === "driver" ? "Conductor" : emp.type}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right space-x-2 flex justify-end">
@@ -257,6 +269,7 @@ export function EmployeesModule() {
                       variant="ghost"
                       size="sm"
                       className="text-primary hover:bg-primary/10"
+                      onClick={() => openEditDialog(emp)}
                     >
                       <Edit2 className="h-4 w-4" />
                     </Button>
@@ -264,6 +277,7 @@ export function EmployeesModule() {
                       variant="ghost"
                       size="sm"
                       className="text-destructive hover:bg-destructive/10"
+                      onClick={() => handleDeleteEmployee(emp.id_staff)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -272,10 +286,7 @@ export function EmployeesModule() {
               ))}
               {filteredEmployees.length === 0 && (
                 <tr>
-                  <td
-                    colSpan="5"
-                    className="px-6 py-8 text-center text-muted-foreground"
-                  >
+                  <td colSpan="5" className="px-6 py-8 text-center text-muted-foreground">
                     No se encontraron empleados
                   </td>
                 </tr>
@@ -288,6 +299,86 @@ export function EmployeesModule() {
       <div className="text-sm text-muted-foreground">
         Mostrando {filteredEmployees.length} de {employees.length} empleados
       </div>
+
+      <Dialog open={isEditOpen} onOpenChange={(open) => { if (!open) { setIsEditOpen(false); setEditingEmployee(null); } }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Editar empleado</DialogTitle>
+          </DialogHeader>
+          {editingEmployee && (
+            <form onSubmit={handleEditEmployee} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-employee-name">Nombre</Label>
+                  <Input
+                    id="edit-employee-name"
+                    value={editingEmployee.name}
+                    onChange={(event) =>
+                      setEditingEmployee((current) => ({
+                        ...current,
+                        name: event.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-employee-last-name">Apellido</Label>
+                  <Input
+                    id="edit-employee-last-name"
+                    value={editingEmployee.last_name}
+                    onChange={(event) =>
+                      setEditingEmployee((current) => ({
+                        ...current,
+                        last_name: event.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-employee-dni">DNI</Label>
+                  <Input
+                    id="edit-employee-dni"
+                    value={editingEmployee.dni}
+                    onChange={(event) =>
+                      setEditingEmployee((current) => ({
+                        ...current,
+                        dni: event.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-employee-type">Tipo</Label>
+                  <Select
+                    value={editingEmployee.type}
+                    onValueChange={(value) =>
+                      setEditingEmployee((current) => ({ ...current, type: value }))
+                    }
+                  >
+                    <SelectTrigger id="edit-employee-type" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="guide">Guía</SelectItem>
+                      <SelectItem value="driver">Conductor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => { setIsEditOpen(false); setEditingEmployee(null); }}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={isSaving}>
+                  {isSaving ? "Guardando..." : "Guardar cambios"}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
