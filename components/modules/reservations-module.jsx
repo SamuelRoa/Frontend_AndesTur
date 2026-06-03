@@ -139,6 +139,20 @@ export function ReservationsModule() {
     }
   }
 
+  const handleApproveReservation = async (id) => {
+    if (!confirm('¿Estás seguro de aprobar y validar esta reserva? Se enviará un correo de confirmación al cliente.')) return
+    setIsSaving(true)
+    try {
+      await reservations.update(id, { pay_state: 'paid' })
+      await loadReservations()
+    } catch (err) {
+      console.error('Error approving reservation:', err)
+      alert(err?.message || 'Error al aprobar la reserva')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   const getPayStateLabel = (state) => {
     switch (state) {
       case 'paid': return 'Pagado'
@@ -299,6 +313,11 @@ export function ReservationsModule() {
                 </div>
               </div>
               <div className="flex gap-2 pt-4 border-t border-border">
+                {reservation.pay_state !== 'paid' && (
+                  <Button variant="default" size="sm" className="flex-1 bg-green-600 hover:bg-green-700 text-white" onClick={() => handleApproveReservation(reservation.id_reservation)} disabled={isSaving}>
+                    <CheckCircle className="h-4 w-4 mr-1" /> Aprobar
+                  </Button>
+                )}
                 <Button variant="outline" size="sm" className="flex-1 border-border" onClick={() => openEditDialog(reservation)}>
                   <Edit2 className="h-4 w-4 mr-1" /> Editar
                 </Button>
