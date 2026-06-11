@@ -1,4 +1,5 @@
-import { Download, FileText, FileSpreadsheet, File } from 'lucide-react'
+import { useState } from 'react'
+import { Download, FileText, FileSpreadsheet, File, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -8,10 +9,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { downloadExport } from '@/lib/api'
 
 export function ExportButton({ moduleName = 'datos' }) {
-  const handleExport = (format) => {
-    alert(`Exportar ${moduleName} como ${format.toUpperCase()} — próximamente`)
+  const [loading, setLoading] = useState(null)
+
+  const handleExport = async (format) => {
+    setLoading(format)
+    try {
+      await downloadExport(moduleName, format)
+    } catch (err) {
+      alert(`Error al exportar: ${err.message}`)
+    } finally {
+      setLoading(null)
+    }
   }
 
   return (
@@ -25,22 +36,22 @@ export function ExportButton({ moduleName = 'datos' }) {
       <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuLabel>Exportar como</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => handleExport('pdf')} className="gap-3 cursor-pointer">
-          <FileText className="h-4 w-4 text-destructive" />
+        <DropdownMenuItem onClick={() => handleExport('pdf')} className="gap-3 cursor-pointer" disabled={loading === 'pdf'}>
+          {loading === 'pdf' ? <Loader2 className="h-4 w-4 animate-spin text-destructive" /> : <FileText className="h-4 w-4 text-destructive" />}
           <div>
             <p className="text-sm font-medium">PDF</p>
             <p className="text-xs text-muted-foreground">Documento portátil</p>
           </div>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleExport('txt')} className="gap-3 cursor-pointer">
-          <File className="h-4 w-4 text-muted-foreground" />
+        <DropdownMenuItem onClick={() => handleExport('txt')} className="gap-3 cursor-pointer" disabled={loading === 'txt'}>
+          {loading === 'txt' ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : <File className="h-4 w-4 text-muted-foreground" />}
           <div>
             <p className="text-sm font-medium">TXT</p>
             <p className="text-xs text-muted-foreground">Texto plano</p>
           </div>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleExport('excel')} className="gap-3 cursor-pointer">
-          <FileSpreadsheet className="h-4 w-4 text-green-600" />
+        <DropdownMenuItem onClick={() => handleExport('excel')} className="gap-3 cursor-pointer" disabled={loading === 'excel'}>
+          {loading === 'excel' ? <Loader2 className="h-4 w-4 animate-spin text-green-600" /> : <FileSpreadsheet className="h-4 w-4 text-green-600" />}
           <div>
             <p className="text-sm font-medium">Excel</p>
             <p className="text-xs text-muted-foreground">Hoja de cálculo</p>
