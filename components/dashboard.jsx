@@ -27,7 +27,7 @@ const destinationStateData = [
   { state: 'Trujillo', count: 12 },
 ]
 
-export function Dashboard() {
+export function Dashboard({ onNavigate }) {
   const [stats, setStats] = useState(null)
   const [reservationsByMonth, setReservationsByMonth] = useState([])
   const [reservationsByState, setReservationsByState] = useState([])
@@ -137,12 +137,12 @@ export function Dashboard() {
   }, [])
 
   const statCards = [
-    { label: 'Ingresos Totales', value: stats?.totalRevenue != null ? `$${stats.totalRevenue.toLocaleString()}` : '...', icon: DollarSign, iconColor: 'text-cyan-600 dark:text-cyan-400', bgColor: 'bg-cyan-50 dark:bg-cyan-900/30' },
-    { label: 'Reservas Pendientes', value: stats?.pendingReservations ?? '...', icon: Calendar, iconColor: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-50 dark:bg-blue-900/30' },
-    { label: 'Ocupación de Vehículos', value: stats?.vehicleOccupancyRate != null ? `${stats.vehicleOccupancyRate}%` : '...', icon: Truck, iconColor: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-50 dark:bg-orange-900/30' },
-    { label: 'Destino Popular', value: stats?.popularDestinationLabel ?? '...', icon: MapPin, iconColor: 'text-green-700 dark:text-green-400', bgColor: 'bg-green-50 dark:bg-green-900/30', valueClassName: 'font-serif text-3xl font-bold leading-tight whitespace-normal break-words' },
-    { label: 'Reservas Activas', value: stats?.activeReservations ?? '...', icon: Calendar, iconColor: 'text-slate-700 dark:text-slate-400', bgColor: 'bg-slate-50 dark:bg-slate-900/30' },
-    { label: 'Total Reservas', value: stats?.totalReservations ?? '...', icon: Package, iconColor: 'text-teal-700 dark:text-teal-400', bgColor: 'bg-teal-50 dark:bg-teal-900/30' },
+    { label: 'Ingresos Totales', value: stats?.totalRevenue != null ? `$${stats.totalRevenue.toLocaleString()}` : '...', icon: DollarSign, iconColor: 'text-cyan-600 dark:text-cyan-400', bgColor: 'bg-cyan-50 dark:bg-cyan-900/30', module: 'packages' },
+    { label: 'Reservas Pendientes', value: stats?.pendingReservations ?? '...', icon: Calendar, iconColor: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-50 dark:bg-blue-900/30', module: 'reservations' },
+    { label: 'Ocupación de Vehículos', value: stats?.vehicleOccupancyRate != null ? `${stats.vehicleOccupancyRate}%` : '...', icon: Truck, iconColor: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-50 dark:bg-orange-900/30', module: 'vehicles' },
+    { label: 'Destino Popular', value: stats?.popularDestinationLabel ?? '...', icon: MapPin, iconColor: 'text-green-700 dark:text-green-400', bgColor: 'bg-green-50 dark:bg-green-900/30', valueClassName: 'font-serif text-3xl font-bold leading-tight whitespace-normal break-words', module: 'destinations' },
+    { label: 'Reservas Activas', value: stats?.activeReservations ?? '...', icon: Calendar, iconColor: 'text-slate-700 dark:text-slate-400', bgColor: 'bg-slate-50 dark:bg-slate-900/30', module: 'reservations' },
+    { label: 'Total Reservas', value: stats?.totalReservations ?? '...', icon: Package, iconColor: 'text-teal-700 dark:text-teal-400', bgColor: 'bg-teal-50 dark:bg-teal-900/30', module: 'reservations' },
   ]
 
   return (
@@ -157,19 +157,26 @@ export function Dashboard() {
         {statCards.map((stat, index) => {
           const Icon = stat.icon
           return (
-            <Card key={index} className="hover:shadow-lg transition-shadow border-border">
-              <CardContent className="pt-6">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">{stat.label}</p>
-                    <p className={`${stat.valueClassName ?? 'font-serif text-3xl font-bold'} text-foreground`}>{stat.value}</p>
+            <button
+              key={index}
+              type="button"
+              onClick={() => onNavigate?.(stat.module)}
+              className="text-left rounded-xl border border-border hover:shadow-lg transition-shadow focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <Card className="h-full bg-transparent shadow-none border-none">
+                <CardContent className="pt-6">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-1">{stat.label}</p>
+                      <p className={`${stat.valueClassName ?? 'font-serif text-3xl font-bold'} text-foreground`}>{stat.value}</p>
+                    </div>
+                    <div className={`${stat.bgColor} ${stat.iconColor} p-3 rounded-lg`}>
+                      <Icon className="h-6 w-6" />
+                    </div>
                   </div>
-                  <div className={`${stat.bgColor} ${stat.iconColor} p-3 rounded-lg`}>
-                    <Icon className="h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </button>
           )
         })}
       </div>

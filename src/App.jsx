@@ -39,7 +39,7 @@ export default function App() {
   const renderModule = () => {
     switch (activeModule) {
       case "dashboard":
-        return <Dashboard />;
+        return <Dashboard onNavigate={setActiveModule} />;
       case "employees":
         return <EmployeesModule />;
       case "destinations":
@@ -51,7 +51,7 @@ export default function App() {
       case "reservations":
         return <ReservationsModule />;
       default:
-        return <Dashboard />;
+        return <Dashboard onNavigate={setActiveModule} />;
     }
   };
 
