@@ -266,7 +266,7 @@ npm run dev        # Inicia en http://localhost:3000
 ```bash
 cd AndesTur_panel
 pnpm install
-pnpm dev           # Inicia en http://localhost:5173
+pnpm dev           # Inicia en http://localhost:5174
 ```
 
 ### 3. Variables de Entorno
@@ -292,13 +292,10 @@ VITE_API_URL=http://localhost:3000
 
 ---
 
-## Credenciales Demo
+## Credenciales reales
 
-```
-Admin:    admin@andetur.com / admin123
-Gerente:  manager@andetur.com / manager123
-Usuario:  usuario@andetur.com / user123
-```
+Las credenciales de acceso a producción están en **CREDENCIALES.txt**. No se incluyen aquí por seguridad.
+
 
 ---
 

@@ -1,32 +1,25 @@
 """
 ╔════════════════════════════════════════════════════════════════════════════╗
 ║                        🏔️ AndesTur - Sistema Administrativo 🏔️          ║
-║                     Panel de Agencia Turística - Demo                      ║
+║                     Panel de Agencia Turística                      ║
 ╚════════════════════════════════════════════════════════════════════════════╝
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                      ✅ CREDENCIALES DE ACCESO (Demo)
+                      ✅ CREDENCIALES DE ACCESO (Producción)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1️⃣  ADMINISTRADOR (Acceso Completo)
+1️⃣  CEGARRA KIMBERLY (Acceso Completo)
     ┌─────────────────────────────────────────────────────────────┐
-    │ Email:        admin@andetur.com                             │
-    │ Contraseña:   admin123                                      │
-    │ Rol:          Administrador - Acceso a todos los módulos    │
+    │ Email:        cegarrakimberly1@gmail.com                 │
+    │ Contraseña:   Cegarra2601$                               │
+    │ Rol:          Administrador - Acceso a todos los módulos  │
     └─────────────────────────────────────────────────────────────┘
 
-2️⃣  GERENTE (Gestión Operacional)
+2️⃣  SAMUEL ROA (Acceso Completo)
     ┌─────────────────────────────────────────────────────────────┐
-    │ Email:        manager@andetur.com                           │
-    │ Contraseña:   manager123                                    │
-    │ Rol:          Gerente - Gestión de operaciones             │
-    └─────────────────────────────────────────────────────────────┘
-
-3️⃣  USUARIO (Visualización)
-    ┌─────────────────────────────────────────────────────────────┐
-    │ Email:        usuario@andetur.com                           │
-    │ Contraseña:   user123                                       │
-    │ Rol:          Usuario - Acceso de lectura                  │
+    │ Email:        samuelroa62@gmail.com                     │
+    │ Contraseña:   0411Canela$                              │
+    │ Rol:          Administrador - Acceso a todos los módulos │
     └─────────────────────────────────────────────────────────────┘
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -114,11 +107,10 @@ Una vez dentro del sistema, puedes acceder a estos módulos desde el sidebar:
                        ℹ️  INFORMACIÓN IMPORTANTE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✅ Este es un sistema de demostración con datos ficticios
-✅ Todos los datos son simulados (mock data)
-✅ No requiere conexión a base de datos
+✅ El sistema se conecta a la base de datos real y muestra datos en tiempo real
+✅ Requiere conexión al backend para obtener información
 ✅ El tema se persiste automáticamente
-✅ Funciona completamente offline
+✅ La aplicación está lista para producción
 
 ⚠️  Para producción:
    • Conecta a tu base de datos (Supabase recomendado)
