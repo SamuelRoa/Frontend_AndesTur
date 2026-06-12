@@ -4,70 +4,89 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { BarChart, Bar, LabelList, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { Users, MapPin, Package, Truck, DollarSign, Calendar } from 'lucide-react'
-import { staff, packages, destinations, vehicles, reservations } from '@/lib/api'
-
-const revenueTrendData = [
-  { month: 'Ene', ingresos: 7600 },
-  { month: 'Feb', ingresos: 6800 },
-  { month: 'Mar', ingresos: 10100 },
-  { month: 'Abr', ingresos: 9200 },
-  { month: 'May', ingresos: 7600 },
-  { month: 'Jun', ingresos: 12000 },
-  { month: 'Jul', ingresos: 22000 },
-  { month: 'Ago', ingresos: 18000 },
-  { month: 'Sep', ingresos: 9800 },
-  { month: 'Oct', ingresos: 11500 },
-  { month: 'Nov', ingresos: 14800 },
-  { month: 'Dic', ingresos: 25200 },
-]
-
-const destinationStateData = [
-  { state: 'Mérida', count: 18 },
-  { state: 'Táchira', count: 14 },
-  { state: 'Trujillo', count: 12 },
-]
+import { staff, packages, destinations, vehicles, reservations, states, municipalities, packagesDestinations, paymentHeaders } from '@/lib/api'
 
 export function Dashboard({ onNavigate }) {
   const [stats, setStats] = useState(null)
   const [reservationsByMonth, setReservationsByMonth] = useState([])
   const [reservationsByState, setReservationsByState] = useState([])
+  const [revenueTrendData, setRevenueTrendData] = useState([])
+  const [destinationStateData, setDestinationStateData] = useState([])
 
   useEffect(() => {
     async function loadStats() {
       try {
-        const [staffData, destData, pkgData, vehData, resData] = await Promise.all([
+        const [staffData, destData, pkgData, vehData, resData, statesData, munData, pkgDestData, payData] = await Promise.all([
           staff.getAll(),
           destinations.getAll(),
           packages.getAll(),
           vehicles.getAll(),
           reservations.getAll(),
+          states.getAll(),
+          municipalities.getAll(),
+          packagesDestinations.getAll(),
+          paymentHeaders.getAll(),
         ])
         
         const resList = resData.data || []
-        const totalRevenue = resList.reduce((sum, reservation) => {
-          const amount = Number(reservation.totalPrice ?? reservation.total_price ?? reservation.amount ?? reservation.price ?? 0)
-          return sum + (Number.isFinite(amount) ? amount : 0)
-        }, 0)
+        
+        // Map packages by ID
+        const packageById = (pkgData.data || []).reduce((map, pkg) => {
+          const id = pkg.id_package || pkg.id
+          if (id) {
+            map[id] = pkg
+          }
+          return map
+        }, {})
+
+        // Map payment amounts by reservation ID
+        const paymentByResId = (payData.data || []).reduce((map, p) => {
+          if (p.id_reservation) {
+            const amount = Number(p.total_amount) || 0
+            map[p.id_reservation] = (map[p.id_reservation] || 0) + amount
+          }
+          return map
+        }, {})
+
+        // Calculate total revenue from paid reservations using real payment amounts
+        const totalRevenue = resList
+          .filter(r => r.pay_state === 'paid')
+          .reduce((sum, r) => {
+            const paidAmount = paymentByResId[r.id_reservation]
+            if (paidAmount) return sum + paidAmount
+            const pkgId = r.id_package || r.package_id
+            const pkg = packageById[pkgId]
+            const price = pkg ? Number(pkg.price) : 0
+            return sum + (Number.isFinite(price) ? price : 0)
+          }, 0)
 
         const pendingReservations = resList.filter(r =>
-          r.status === 'pending' || r.paymentStatus === 'pending' || r.pay_state === 'pending' || r.payment_status === 'pending'
+          r.pay_state === 'pending'
         ).length
 
         const vehicleOccupancyRate = vehData.data?.length
           ? Math.min(100, Math.round((resList.length / vehData.data.length) * 100))
           : 0
 
-        const packageById = (pkgData.data || []).reduce((map, pkg) => {
-          map[pkg.id] = pkg
+        // Map packages to destination IDs
+        const pkgDestList = pkgDestData.data || []
+        const destIdsByPkgId = pkgDestList.reduce((map, pd) => {
+          const pkgId = pd.id_package
+          const destId = pd.id_destination
+          if (pkgId && destId) {
+            if (!map[pkgId]) map[pkgId] = []
+            map[pkgId].push(destId)
+          }
           return map
         }, {})
 
+        // Calculate reservation counts per destination
         const destinationCounts = (resList || []).reduce((counts, reservation) => {
-          const pkg = packageById[reservation.packageId || reservation.package_id]
-          const destinationId = pkg?.destinationId || pkg?.destination_id
-          if (destinationId) {
-            counts[destinationId] = (counts[destinationId] || 0) + 1
-          }
+          const pkgId = reservation.id_package || reservation.package_id
+          const destIds = destIdsByPkgId[pkgId] || []
+          destIds.forEach(destId => {
+            counts[destId] = (counts[destId] || 0) + 1
+          })
           return counts
         }, {})
 
@@ -81,11 +100,11 @@ export function Dashboard({ onNavigate }) {
         }
 
         const topDestinationId = Object.entries(destinationCounts).sort((a, b) => b[1] - a[1])[0]?.[0]
-        const topDestination = (destData.data || []).find(dest => dest.id === topDestinationId)
+        const topDestination = (destData.data || []).find(dest => (dest.id_destination ?? dest.id)?.toString() === topDestinationId?.toString())
         let popularDestinationLabel = 'Sin datos'
         if (topDestination) {
           const nameClean = sanitizeDestinationName(topDestination.name)
-          const count = Number(destinationCounts[topDestination.id] ?? 0)
+          const count = Number(destinationCounts[topDestination.id_destination ?? topDestination.id] ?? 0)
           popularDestinationLabel = count > 0 ? `${nameClean} — ${count} reservas` : `${nameClean}`
         }
 
@@ -122,12 +141,62 @@ export function Dashboard({ onNavigate }) {
           monthCounts[monthYear] = (monthCounts[monthYear] || 0) + 1
         })
         
-        // Convertir a array y ordenar por fecha (simplificado asumiendo el orden natural)
         const chartData = Object.keys(monthCounts).map(month => ({
-          month: month.charAt(0).toUpperCase() + month.slice(1), // Capitalizar
+          month: month.charAt(0).toUpperCase() + month.slice(1),
           reservas: monthCounts[month]
         }))
         setReservationsByMonth(chartData)
+
+        // Compute revenue per month for line chart (Evolución de Ingresos Mensuales)
+        // Solo se cuentan reservas pagadas (pay_state === 'paid'), usando el monto real de payment_headers o el precio del paquete
+        const monthRevenue = {}
+        resList
+          .filter(r => r.pay_state === 'paid')
+          .forEach(r => {
+            const date = new Date(r.reservation_date || r.created_at)
+            const monthYear = date.toLocaleString('es-ES', { month: 'short', year: 'numeric' }).replace('.', '')
+            const paidAmount = paymentByResId[r.id_reservation]
+            if (paidAmount) {
+              monthRevenue[monthYear] = (monthRevenue[monthYear] || 0) + paidAmount
+            } else {
+              const pkgId = r.id_package || r.package_id
+              const pkg = packageById[pkgId]
+              const price = pkg ? Number(pkg.price) : 0
+              if (Number.isFinite(price)) {
+                monthRevenue[monthYear] = (monthRevenue[monthYear] || 0) + price
+              }
+            }
+          })
+        const revenueData = Object.keys(monthRevenue).map(month => ({
+          month: month.charAt(0).toUpperCase() + month.slice(1),
+          ingresos: monthRevenue[month]
+        }))
+        setRevenueTrendData(revenueData)
+
+        // Compute destination counts per state for bar chart (Cantidad de Destinos por Estado)
+        const stateNameById = (statesData.data || []).reduce((map, s) => {
+          map[s.id_state] = s.name
+          return map
+        }, {})
+
+        const stateIdByMunicipalityId = (munData.data || []).reduce((map, m) => {
+          map[m.id_municipality] = m.id_state
+          return map
+        }, {})
+
+        const destStateCounts = {}
+
+        const destList = destData.data || []
+        destList.forEach(dest => {
+          const munId = dest.id_municipality
+          const stateId = stateIdByMunicipalityId[munId]
+          const stateName = stateNameById[stateId] || 'Sin datos'
+          destStateCounts[stateName] = (destStateCounts[stateName] || 0) + 1
+        })
+        const destStateArray = Object.entries(destStateCounts)
+          .map(([state, count]) => ({ state, count }))
+          .sort((a, b) => b.count - a.count)
+        setDestinationStateData(destStateArray)
 
       } catch (err) {
         console.error('Error loading dashboard stats:', err)
@@ -275,7 +344,7 @@ export function Dashboard({ onNavigate }) {
         <Card className="border-border">
           <CardHeader>
             <CardTitle>Cantidad de Destinos por Estado</CardTitle>
-            <CardDescription>Solo Mérida, Táchira y Trujillo del Andino</CardDescription>
+            <CardDescription>Cantidad de destinos turísticos por estado</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
