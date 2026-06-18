@@ -5,7 +5,7 @@ export function Logo({ className = "", size = 40 }) {
       alt="Logo AndesTur"
       width={size}
       height={size}
-      className={className}
+      className={`${className} transition-transform duration-200 ease-out hover:scale-105`}
       style={{ objectFit: "contain", display: "block" }}
     />
   );

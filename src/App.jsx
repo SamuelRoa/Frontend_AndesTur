@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { cn } from '@/lib/utils'
 import { useTheme } from "next-themes";
 import { LoginForm } from "@/components/login-form";
 import { SignupForm } from "@/components/signup-form";
@@ -124,14 +125,30 @@ export default function App() {
       />
       <main className="lg:ml-64 p-8">
         <div className="flex items-center justify-between mb-6 gap-4">
-          <p className="text-sm text-muted-foreground capitalize shrink-0">
+          <p className="text-base font-semibold text-muted-foreground capitalize shrink-0">
             {activeModule === "dashboard" ? "Dashboard" : activeModule}
           </p>
           <GlobalSearch onNavigate={setActiveModule} />
           <ThemeToggle />
         </div>
-        {renderModule()}
+        <ModuleWrapper moduleKey={activeModule}>{renderModule()}</ModuleWrapper>
       </main>
     </div>
   );
+}
+
+function ModuleWrapper({ children, moduleKey }) {
+  const [mountedModule, setMountedModule] = useState(false)
+
+  useEffect(() => {
+    setMountedModule(false)
+    const t = setTimeout(() => setMountedModule(true), 10)
+    return () => clearTimeout(t)
+  }, [moduleKey])
+
+  return (
+    <div className={cn('transform-gpu transition-all duration-300 ease-out', mountedModule ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1')}>
+      {children}
+    </div>
+  )
 }

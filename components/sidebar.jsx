@@ -62,7 +62,7 @@ export function Sidebar({ activeModule, onModuleChange, onLogout, userEmail, use
                 }`}
               >
                 <Icon className="h-5 w-5 flex-shrink-0" />
-                <span>{label}</span>
+                <span className="text-sm font-semibold">{label}</span>
               </button>
             ))}
           </nav>
