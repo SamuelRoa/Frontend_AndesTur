@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Switch } from '@/components/ui/switch'
 import { destinations } from '@/lib/api'
 import { ExportButton } from '@/components/export-button'
 import { Plus, Edit2, Trash2, Search, MapPin } from 'lucide-react'
@@ -23,7 +24,9 @@ export function DestinationsModule() {
     id_municipality: '',
     name: '',
     description: '',
+    image_url: '',
   })
+  const [togglingActiveId, setTogglingActiveId] = useState(null)
 
   const loadDestinations = async () => {
     setLoading(true)
@@ -55,10 +58,11 @@ export function DestinationsModule() {
         id_municipality: Number(newDestination.id_municipality),
         name: newDestination.name.trim(),
         description: newDestination.description.trim(),
+        image_url: newDestination.image_url.trim() || null,
       })
       await loadDestinations()
       setIsCreateOpen(false)
-      setNewDestination({ id_municipality: '', name: '', description: '' })
+      setNewDestination({ id_municipality: '', name: '', description: '', image_url: '' })
     } catch (err) {
       console.error('Error creating destination:', err)
       alert(err?.message || 'Error creando destino')
@@ -81,6 +85,7 @@ export function DestinationsModule() {
         id_municipality: Number(editingDestination.id_municipality),
         name: editingDestination.name.trim(),
         description: editingDestination.description.trim(),
+        image_url: editingDestination.image_url?.trim() || null,
       })
       await loadDestinations()
       setIsEditOpen(false)
@@ -101,6 +106,27 @@ export function DestinationsModule() {
     } catch (err) {
       console.error('Error deleting destination:', err)
       alert(err?.message || 'Error eliminando destino')
+    }
+  }
+
+  const handleToggleActive = async (dest) => {
+    const nextActive = !Boolean(dest.activo)
+    setTogglingActiveId(dest.id_destination)
+
+    try {
+      await destinations.update(dest.id_destination, { activo: nextActive })
+      setDestinationsList((current) =>
+        current.map((item) =>
+          item.id_destination === dest.id_destination
+            ? { ...item, activo: nextActive }
+            : item,
+        ),
+      )
+    } catch (err) {
+      console.error('Error actualizando activo del destino:', err)
+      alert(err?.message || 'Error actualizando estado del destino')
+    } finally {
+      setTogglingActiveId(null)
     }
   }
 
@@ -160,6 +186,25 @@ export function DestinationsModule() {
                     rows={4}
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="destination-image-url">URL de imagen</Label>
+                  <Input
+                    id="destination-image-url"
+                    value={newDestination.image_url}
+                    onChange={(event) => setNewDestination((current) => ({ ...current, image_url: event.target.value }))}
+                    placeholder="https://ejemplo.com/imagen.jpg"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="destination-image-preview">Vista previa de imagen</Label>
+                  <div className="h-40 rounded-2xl overflow-hidden bg-slate-100 border border-border flex items-center justify-center text-sm text-slate-500">
+                    {newDestination.image_url ? (
+                      <img src={newDestination.image_url} alt="Preview" className="h-full w-full object-cover" />
+                    ) : (
+                      'Pega la URL de la imagen aquí para ver una vista previa'
+                    )}
+                  </div>
+                </div>
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>Cancelar</Button>
                   <Button type="submit" disabled={isSaving}>{isSaving ? 'Guardando...' : 'Crear destino'}</Button>
@@ -182,9 +227,31 @@ export function DestinationsModule() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredDestinations.map((dest) => (
-          <Card key={dest.id_destination} className="hover:shadow-lg transition-shadow border-border">
+          <Card key={dest.id_destination} className="hover:shadow-lg transition-shadow border-border overflow-hidden">
+            <div className="relative h-44 bg-slate-100 overflow-hidden">
+              {dest.image_url ? (
+                <img
+                  src={dest.image_url}
+                  alt={dest.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-500 text-sm">
+                  Sin imagen de fondo
+                </div>
+              )}
+              <div
+                className={
+                  `absolute left-4 top-4 rounded-full px-3 py-1 text-xs font-semibold text-white ${
+                    dest.activo ? 'bg-emerald-600' : 'bg-slate-600'
+                  }`
+                }
+              >
+                {dest.activo ? 'PUBLICADO' : 'BORRADOR'}
+              </div>
+            </div>
             <CardHeader>
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <CardTitle className="flex items-center gap-2">
                     <MapPin className="h-5 w-5 text-primary" />
@@ -192,10 +259,20 @@ export function DestinationsModule() {
                   </CardTitle>
                   <CardDescription className="mt-1">Municipio ID: {dest.id_municipality}</CardDescription>
                 </div>
+                <Switch
+                  checked={Boolean(dest.activo)}
+                  onCheckedChange={() => handleToggleActive(dest)}
+                  disabled={togglingActiveId === dest.id_destination}
+                  className="border-border"
+                />
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-foreground">{dest.description}</p>
+              <div className="text-xs text-muted-foreground">
+                <span className="font-semibold">Ruta de imagen:</span>{' '}
+                {dest.image_url ? dest.image_url : 'No definida'}
+              </div>
               <div className="flex gap-2 pt-4 border-t border-border">
                 <Button variant="outline" size="sm" className="flex-1 border-border" onClick={() => openEditDialog(dest)}>
                   <Edit2 className="h-4 w-4 mr-1" />
@@ -251,6 +328,25 @@ export function DestinationsModule() {
                   onChange={(event) => setEditingDestination((current) => ({ ...current, description: event.target.value }))}
                   rows={4}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-destination-image-url">URL de imagen</Label>
+                <Input
+                  id="edit-destination-image-url"
+                  value={editingDestination.image_url || ''}
+                  onChange={(event) => setEditingDestination((current) => ({ ...current, image_url: event.target.value }))}
+                  placeholder="https://ejemplo.com/imagen.jpg"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Vista previa de imagen</Label>
+                <div className="h-40 rounded-2xl overflow-hidden bg-slate-100 border border-border flex items-center justify-center text-sm text-slate-500">
+                  {editingDestination.image_url ? (
+                    <img src={editingDestination.image_url} alt="Preview" className="h-full w-full object-cover" />
+                  ) : (
+                    'Pega la URL de la imagen aquí para ver una vista previa'
+                  )}
+                </div>
               </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => { setIsEditOpen(false); setEditingDestination(null); }}>Cancelar</Button>
