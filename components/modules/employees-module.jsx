@@ -22,12 +22,15 @@ import {
 } from "@/components/ui/dialog";
 import { staff } from "@/lib/api";
 import { ExportButton } from "@/components/export-button";
-import { Plus, Edit2, Trash2, Search } from "lucide-react";
+import { Plus, Edit2, Trash2, Search, ChevronLeft, ChevronRight } from "lucide-react";
 
 export function EmployeesModule() {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
@@ -39,11 +42,16 @@ export function EmployeesModule() {
     type: "guide",
   });
 
-  const loadEmployees = async () => {
+  const loadEmployees = async (p = 1) => {
     setLoading(true);
     try {
-      const res = await staff.getAll();
+      const res = await staff.getAll({ page: p });
       setEmployees(res.data);
+      if (res.pagination) {
+        setPage(res.pagination.page);
+        setTotalPages(res.pagination.totalPages);
+        setTotal(res.pagination.total);
+      }
     } catch (err) {
       console.error("Error loading staff:", err);
     } finally {
@@ -59,6 +67,11 @@ export function EmployeesModule() {
     const haystack = `${emp.name || ""} ${emp.last_name || ""} ${emp.dni || ""}`.toLowerCase();
     return haystack.includes(searchTerm.toLowerCase());
   });
+
+  const goToPage = (p) => {
+    if (p < 1 || p > totalPages) return;
+    loadEmployees(p);
+  };
 
   const handleCreateEmployee = async (event) => {
     event.preventDefault();
@@ -296,8 +309,25 @@ export function EmployeesModule() {
         </div>
       </Card>
 
-      <div className="text-sm text-muted-foreground">
-        Mostrando {filteredEmployees.length} de {employees.length} empleados
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">
+          Mostrando {filteredEmployees.length} de {total} empleados
+        </div>
+        {totalPages > 1 && (
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="sm" onClick={() => goToPage(page - 1)} disabled={page <= 1}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <Button key={p} variant={p === page ? 'default' : 'outline'} size="sm" className="min-w-9" onClick={() => goToPage(p)}>
+                {p}
+              </Button>
+            ))}
+            <Button variant="outline" size="sm" onClick={() => goToPage(page + 1)} disabled={page >= totalPages}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
 
       <Dialog open={isEditOpen} onOpenChange={(open) => { if (!open) { setIsEditOpen(false); setEditingEmployee(null); } }}>

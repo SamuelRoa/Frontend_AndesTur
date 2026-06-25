@@ -22,12 +22,15 @@ import {
 } from "@/components/ui/dialog";
 import { packages } from "@/lib/api";
 import { ExportButton } from "@/components/export-button";
-import { Plus, Edit2, Trash2, Search } from "lucide-react";
+import { Plus, Edit2, Trash2, Search, ChevronLeft, ChevronRight } from "lucide-react";
 
 export function PackagesModule() {
   const [packagesList, setPackagesList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingPackage, setEditingPackage] = useState(null);
@@ -41,11 +44,16 @@ export function PackagesModule() {
     available_places: "",
   });
 
-  const loadPackages = async () => {
+  const loadPackages = async (p = 1) => {
     setLoading(true);
     try {
-      const res = await packages.getAll();
+      const res = await packages.getAll({ page: p });
       setPackagesList(res.data);
+      if (res.pagination) {
+        setPage(res.pagination.page);
+        setTotalPages(res.pagination.totalPages);
+        setTotal(res.pagination.total);
+      }
     } catch (err) {
       console.error("Error loading packages:", err);
     } finally {
@@ -61,6 +69,11 @@ export function PackagesModule() {
     const haystack = `${pkg.name || ""} ${pkg.description || ""}`.toLowerCase();
     return haystack.includes(searchTerm.toLowerCase());
   });
+
+  const goToPage = (p) => {
+    if (p < 1 || p > totalPages) return;
+    loadPackages(p);
+  };
 
   const handleCreatePackage = async (event) => {
     event.preventDefault();
@@ -233,7 +246,24 @@ export function PackagesModule() {
         )}
       </div>
 
-      <div className="text-sm text-muted-foreground">Mostrando {filteredPackages.length} de {packagesList.length} paquetes</div>
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">Mostrando {filteredPackages.length} de {total} paquetes</div>
+        {totalPages > 1 && (
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="sm" onClick={() => goToPage(page - 1)} disabled={page <= 1}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <Button key={p} variant={p === page ? 'default' : 'outline'} size="sm" className="min-w-9" onClick={() => goToPage(p)}>
+                {p}
+              </Button>
+            ))}
+            <Button variant="outline" size="sm" onClick={() => goToPage(page + 1)} disabled={page >= totalPages}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </div>
 
       <Dialog open={isEditOpen} onOpenChange={(open) => { if (!open) { setIsEditOpen(false); setEditingPackage(null); } }}>
         <DialogContent className="sm:max-w-2xl">

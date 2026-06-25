@@ -17,15 +17,15 @@ export function Dashboard({ onNavigate }) {
     async function loadStats() {
       try {
         const [staffData, destData, pkgData, vehData, resData, statesData, munData, pkgDestData, payData] = await Promise.all([
-          staff.getAll(),
-          destinations.getAll(),
-          packages.getAll(),
-          vehicles.getAll(),
-          reservations.getAll(),
+          staff.getAll({ all: true }),
+          destinations.getAll({ all: true }),
+          packages.getAll({ all: true }),
+          vehicles.getAll({ all: true }),
+          reservations.getAll({ all: true }),
           states.getAll(),
           municipalities.getAll(),
           packagesDestinations.getAll(),
-          paymentHeaders.getAll(),
+          paymentHeaders.getAll({ all: true }),
         ])
         
         const resList = resData.data || []

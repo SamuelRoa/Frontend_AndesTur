@@ -10,12 +10,15 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Switch } from '@/components/ui/switch'
 import { destinations } from '@/lib/api'
 import { ExportButton } from '@/components/export-button'
-import { Plus, Edit2, Trash2, Search, MapPin } from 'lucide-react'
+import { Plus, Edit2, Trash2, Search, MapPin, ChevronLeft, ChevronRight } from 'lucide-react'
 
 export function DestinationsModule() {
   const [destinationsList, setDestinationsList] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [total, setTotal] = useState(0)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [editingDestination, setEditingDestination] = useState(null)
@@ -28,11 +31,16 @@ export function DestinationsModule() {
   })
   const [togglingActiveId, setTogglingActiveId] = useState(null)
 
-  const loadDestinations = async () => {
+  const loadDestinations = async (p = 1) => {
     setLoading(true)
     try {
-      const res = await destinations.getAll()
+      const res = await destinations.getAll({ page: p })
       setDestinationsList(res.data)
+      if (res.pagination) {
+        setPage(res.pagination.page)
+        setTotalPages(res.pagination.totalPages)
+        setTotal(res.pagination.total)
+      }
     } catch (err) {
       console.error('Error loading destinations:', err)
     } finally {
@@ -48,6 +56,11 @@ export function DestinationsModule() {
     const haystack = `${dest.name || ''} ${dest.description || ''} ${dest.id_municipality || ''}`.toLowerCase()
     return haystack.includes(searchTerm.toLowerCase())
   })
+
+  const goToPage = (p) => {
+    if (p < 1 || p > totalPages) return
+    loadDestinations(p)
+  }
 
   const handleCreateDestination = async (event) => {
     event.preventDefault()
@@ -291,8 +304,25 @@ export function DestinationsModule() {
         )}
       </div>
 
-      <div className="text-sm text-muted-foreground">
-        Mostrando {filteredDestinations.length} de {destinationsList.length} destinos
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">
+          Mostrando {filteredDestinations.length} de {total} destinos
+        </div>
+        {totalPages > 1 && (
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="sm" onClick={() => goToPage(page - 1)} disabled={page <= 1}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <Button key={p} variant={p === page ? 'default' : 'outline'} size="sm" className="min-w-9" onClick={() => goToPage(p)}>
+                {p}
+              </Button>
+            ))}
+            <Button variant="outline" size="sm" onClick={() => goToPage(page + 1)} disabled={page >= totalPages}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
 
       <Dialog open={isEditOpen} onOpenChange={(open) => { if (!open) { setIsEditOpen(false); setEditingDestination(null); } }}>

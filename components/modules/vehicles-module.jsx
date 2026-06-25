@@ -8,12 +8,15 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { vehicles } from '@/lib/api'
 import { ExportButton } from '@/components/export-button'
-import { Plus, Edit2, Trash2, Search, Wrench } from 'lucide-react'
+import { Plus, Edit2, Trash2, Search, Wrench, ChevronLeft, ChevronRight } from 'lucide-react'
 
 export function VehiclesModule() {
   const [vehicleList, setVehicleList] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [total, setTotal] = useState(0)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [editingVehicle, setEditingVehicle] = useState(null)
@@ -26,11 +29,16 @@ export function VehiclesModule() {
     status: 'active',
   })
 
-  const loadVehicles = async () => {
+  const loadVehicles = async (p = 1) => {
     setLoading(true)
     try {
-      const res = await vehicles.getAll()
+      const res = await vehicles.getAll({ page: p })
       setVehicleList(res.data)
+      if (res.pagination) {
+        setPage(res.pagination.page)
+        setTotalPages(res.pagination.totalPages)
+        setTotal(res.pagination.total)
+      }
     } catch (err) {
       console.error('Error loading vehicles:', err)
     } finally {
@@ -46,6 +54,11 @@ export function VehiclesModule() {
     const haystack = `${veh.plate || ''} ${veh.brand || ''} ${veh.model || ''}`.toLowerCase()
     return haystack.includes(searchTerm.toLowerCase())
   })
+
+  const goToPage = (p) => {
+    if (p < 1 || p > totalPages) return
+    loadVehicles(p)
+  }
 
   const handleCreateVehicle = async (event) => {
     event.preventDefault()
@@ -228,7 +241,24 @@ export function VehiclesModule() {
         </div>
       </Card>
 
-      <div className="text-sm text-muted-foreground">Mostrando {filteredVehicles.length} de {vehicleList.length} vehículos</div>
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">Mostrando {filteredVehicles.length} de {total} vehículos</div>
+        {totalPages > 1 && (
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="sm" onClick={() => goToPage(page - 1)} disabled={page <= 1}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <Button key={p} variant={p === page ? 'default' : 'outline'} size="sm" className="min-w-9" onClick={() => goToPage(p)}>
+                {p}
+              </Button>
+            ))}
+            <Button variant="outline" size="sm" onClick={() => goToPage(page + 1)} disabled={page >= totalPages}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </div>
 
       <Dialog open={isEditOpen} onOpenChange={(open) => { if (!open) { setIsEditOpen(false); setEditingVehicle(null); } }}>
         <DialogContent className="sm:max-w-lg">

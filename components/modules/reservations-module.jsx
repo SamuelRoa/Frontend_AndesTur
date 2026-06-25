@@ -7,17 +7,23 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { customers, packages, reservations, paymentHeaders } from '@/lib/api'
+import { customers, packages, reservations, paymentHeaders, destinations } from '@/lib/api'
 import { ExportButton } from '@/components/export-button'
-import { Plus, Edit2, Trash2, Search, CheckCircle, Clock } from 'lucide-react'
+import { Plus, Edit2, Trash2, Search, CheckCircle, Clock, ChevronLeft, ChevronRight } from 'lucide-react'
 
 export function ReservationsModule() {
   const [reservationList, setReservationList] = useState([])
   const [customersList, setCustomersList] = useState([])
   const [packagesList, setPackagesList] = useState([])
   const [paymentHeaderList, setPaymentHeaderList] = useState([])
+  const [destinationsList, setDestinationsList] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [payStateFilter, setPayStateFilter] = useState('all')
+  const [destinationFilter, setDestinationFilter] = useState('all')
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [editingReservation, setEditingReservation] = useState(null)
@@ -29,19 +35,30 @@ export function ReservationsModule() {
     pay_state: 'pending',
   })
 
-  const loadReservations = async () => {
+  const loadReservations = async (p = 1) => {
     setLoading(true)
     try {
-      const [reservationRes, customerRes, packageRes, paymentHeaderRes] = await Promise.all([
-        reservations.getAll(),
-        customers.getAll(),
-        packages.getAll(),
-        paymentHeaders.getAll(),
+      const params = { page: p }
+      if (payStateFilter && payStateFilter !== 'all') params.pay_state = payStateFilter
+      if (destinationFilter && destinationFilter !== 'all') params.id_destination = destinationFilter
+
+      const [reservationRes, customerRes, packageRes, paymentHeaderRes, destRes] = await Promise.all([
+        reservations.getAll(params),
+        customers.getAll({ all: true }),
+        packages.getAll({ all: true }),
+        paymentHeaders.getAll({ all: true }),
+        destinations.getAll({ all: true }),
       ])
       setReservationList(reservationRes.data)
+      if (reservationRes.pagination) {
+        setPage(reservationRes.pagination.page)
+        setTotalPages(reservationRes.pagination.totalPages)
+        setTotal(reservationRes.pagination.total)
+      }
       setCustomersList(customerRes.data)
       setPackagesList(packageRes.data)
       setPaymentHeaderList(paymentHeaderRes.data)
+      setDestinationsList(destRes.data)
     } catch (err) {
       console.error('Error loading reservations:', err)
     } finally {
@@ -52,6 +69,10 @@ export function ReservationsModule() {
   useEffect(() => {
     loadReservations()
   }, [])
+
+  useEffect(() => {
+    loadReservations(1)
+  }, [payStateFilter, destinationFilter])
 
   const customersById = Object.fromEntries(customersList.map((customer) => [customer.id_customer, customer]))
   const packagesById = Object.fromEntries(packagesList.map((pkg) => [pkg.id_package, pkg]))
@@ -78,6 +99,11 @@ export function ReservationsModule() {
     const haystack = `${reservation.customerName} ${reservation.customerEmail} ${reservation.packageName}`.toLowerCase()
     return haystack.includes(searchTerm.toLowerCase())
   })
+
+  const goToPage = (p) => {
+    if (p < 1 || p > totalPages) return
+    loadReservations(p)
+  }
 
   const handleCreateReservation = async (event) => {
     event.preventDefault()
@@ -247,9 +273,35 @@ export function ReservationsModule() {
         </div>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Buscar por cliente, email o paquete..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 border-border" />
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Buscar por cliente, email o paquete..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 border-border" />
+        </div>
+        <Select value={payStateFilter} onValueChange={(v) => setPayStateFilter(v)}>
+          <SelectTrigger className="w-full sm:w-44 border-border">
+            <SelectValue placeholder="Todos los estados" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos los estados</SelectItem>
+            <SelectItem value="pending">Pendiente</SelectItem>
+            <SelectItem value="partial">Parcial</SelectItem>
+            <SelectItem value="paid">Pagado</SelectItem>
+            <SelectItem value="cancelled">Cancelado</SelectItem>
+            <SelectItem value="expired">Expirado</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={destinationFilter} onValueChange={(v) => setDestinationFilter(v)}>
+          <SelectTrigger className="w-full sm:w-56 border-border">
+            <SelectValue placeholder="Todos los destinos" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos los destinos</SelectItem>
+            {destinationsList.map((dest) => (
+              <SelectItem key={dest.id_destination} value={String(dest.id_destination)}>{dest.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -333,7 +385,24 @@ export function ReservationsModule() {
         )}
       </div>
 
-      <div className="text-sm text-muted-foreground">Mostrando {filteredReservations.length} de {reservationList.length} reservas</div>
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">Mostrando {filteredReservations.length} de {total} reservas</div>
+        {totalPages > 1 && (
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="sm" onClick={() => goToPage(page - 1)} disabled={page <= 1}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <Button key={p} variant={p === page ? 'default' : 'outline'} size="sm" className="min-w-9" onClick={() => goToPage(p)}>
+                {p}
+              </Button>
+            ))}
+            <Button variant="outline" size="sm" onClick={() => goToPage(page + 1)} disabled={page >= totalPages}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </div>
 
       <Dialog open={isEditOpen} onOpenChange={(open) => { if (!open) { setIsEditOpen(false); setEditingReservation(null); } }}>
         <DialogContent className="sm:max-w-lg">
