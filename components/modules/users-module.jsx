@@ -1,0 +1,571 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { users as usersApi } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import {
+  Plus,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Shield,
+  UserCog,
+  Eye,
+  Ban,
+  CheckCircle,
+} from "lucide-react";
+
+export function UsersModule() {
+  const { user: currentUser } = useAuth();
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [viewingUser, setViewingUser] = useState(null);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [newUser, setNewUser] = useState({
+    username: "",
+    email: "",
+    password: "",
+    role: "operator",
+  });
+
+  const isAdmin = currentUser?.role === "admin";
+
+  const loadUsers = async (p = 1) => {
+    setLoading(true);
+    try {
+      const res = await usersApi.getAll({ page: p });
+      setUsers(res.data);
+      if (res.pagination) {
+        setPage(res.pagination.page);
+        setTotalPages(res.pagination.totalPages);
+        setTotal(res.pagination.total);
+      }
+    } catch (err) {
+      console.error("Error loading users:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const filteredUsers = users.filter((u) => {
+    const haystack = `${u.username || ""} ${u.email || ""} ${u.role || ""}`.toLowerCase();
+    return haystack.includes(searchTerm.toLowerCase());
+  });
+
+  const goToPage = (p) => {
+    if (p < 1 || p > totalPages) return;
+    loadUsers(p);
+  };
+
+  const handleCreateUser = async (event) => {
+    event.preventDefault();
+    if (!newUser.username || !newUser.email || !newUser.password) return;
+    setIsSaving(true);
+    try {
+      await usersApi.create({
+        username: newUser.username.trim(),
+        email: newUser.email.trim(),
+        password: newUser.password,
+        role: newUser.role,
+      });
+      await loadUsers();
+      setIsCreateOpen(false);
+      setNewUser({ username: "", email: "", password: "", role: "operator" });
+    } catch (err) {
+      console.error("Error creating user:", err);
+      alert(err?.message || "Error creando usuario");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const openViewDialog = (u) => {
+    setViewingUser(u);
+    setIsViewOpen(true);
+  };
+
+  const openEditDialog = (u) => {
+    setEditingUser({ ...u, password: "" });
+    setIsEditOpen(true);
+  };
+
+  const handleEditUser = async (event) => {
+    event.preventDefault();
+    if (!editingUser.username || !editingUser.email) return;
+    setIsSaving(true);
+    try {
+      const payload = {
+        username: editingUser.username.trim(),
+        email: editingUser.email.trim(),
+        role: editingUser.role,
+      };
+      if (editingUser.password) {
+        payload.password = editingUser.password;
+      }
+      await usersApi.update(editingUser.id_user, payload);
+      await loadUsers();
+      setIsEditOpen(false);
+      setEditingUser(null);
+    } catch (err) {
+      console.error("Error updating user:", err);
+      alert(err?.message || "Error actualizando usuario");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleToggleActive = async (u) => {
+    const nextActive = !Boolean(u.activo);
+    try {
+      await usersApi.toggleActive(u.id_user, nextActive);
+      setUsers((current) =>
+        current.map((item) =>
+          item.id_user === u.id_user
+            ? { ...item, activo: nextActive }
+            : item
+        )
+      );
+    } catch (err) {
+      console.error("Error toggling user active state:", err);
+      alert(err?.message || "Error actualizando estado del usuario");
+    }
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "—";
+    return new Date(dateStr).toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="text-center text-muted-foreground py-8">
+        Cargando usuarios...
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="font-serif text-3xl font-bold text-foreground">
+            Usuarios
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Gestión de operadores y administradores del sistema
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto">
+                <Plus className="h-4 w-4 mr-2" />
+                Nuevo Usuario
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Nuevo usuario</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleCreateUser} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="user-username">Nombre de usuario</Label>
+                    <Input
+                      id="user-username"
+                      value={newUser.username}
+                      onChange={(event) =>
+                        setNewUser((current) => ({
+                          ...current,
+                          username: event.target.value,
+                        }))
+                      }
+                      placeholder="ej: operador1"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="user-email">Email</Label>
+                    <Input
+                      id="user-email"
+                      type="email"
+                      value={newUser.email}
+                      onChange={(event) =>
+                        setNewUser((current) => ({
+                          ...current,
+                          email: event.target.value,
+                        }))
+                      }
+                      placeholder="email@ejemplo.com"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="user-password">Contraseña</Label>
+                    <Input
+                      id="user-password"
+                      type="password"
+                      value={newUser.password}
+                      onChange={(event) =>
+                        setNewUser((current) => ({
+                          ...current,
+                          password: event.target.value,
+                        }))
+                      }
+                      placeholder="••••••••"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="user-role">Rol</Label>
+                    <Select
+                      value={newUser.role}
+                      onValueChange={(value) =>
+                        setNewUser((current) => ({ ...current, role: value }))
+                      }
+                    >
+                      <SelectTrigger id="user-role" className="w-full">
+                        <SelectValue placeholder="Selecciona el rol" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="operator">Operador</SelectItem>
+                        <SelectItem value="admin">Administrador</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={isSaving}>
+                    {isSaving ? "Guardando..." : "Crear usuario"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      <div className="relative">
+        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Buscar por nombre, email o rol..."
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+          className="pl-10 border-border"
+        />
+      </div>
+
+      <Card className="border-border overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-muted border-b border-border">
+              <tr>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Usuario</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Email</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Rol</th>
+                <th className="px-6 py-3 text-center text-sm font-semibold text-foreground">Estado</th>
+                <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {filteredUsers.map((u) => (
+                <tr key={u.id_user} className="hover:bg-muted/50 transition-colors">
+                  <td className="px-6 py-4 text-sm font-medium text-foreground">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        {u.role === "admin" ? (
+                          <Shield className="h-4 w-4 text-primary" />
+                        ) : (
+                          <UserCog className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </div>
+                      <span>{u.username}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-muted-foreground">{u.email}</td>
+                  <td className="px-6 py-4 text-sm">
+                    <span
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                        u.role === "admin"
+                          ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                          : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                      }`}
+                    >
+                      {u.role === "admin" ? "Administrador" : "Operador"}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-center">
+                    <span
+                      className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
+                        Boolean(u.activo)
+                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                          : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                      }`}
+                    >
+                      {Boolean(u.activo) ? (
+                        <CheckCircle className="h-3 w-3" />
+                      ) : (
+                        <Ban className="h-3 w-3" />
+                      )}
+                      {Boolean(u.activo) ? "Activo" : "Inactivo"}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right space-x-2 flex justify-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-muted-foreground hover:bg-muted"
+                      onClick={() => openViewDialog(u)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-primary hover:bg-primary/10"
+                      onClick={() => openEditDialog(u)}
+                    >
+                      <UserCog className="h-4 w-4" />
+                    </Button>
+                    {u.id_user !== currentUser?.id_user && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={
+                          Boolean(u.activo)
+                            ? "text-destructive hover:bg-destructive/10"
+                            : "text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+                        }
+                        onClick={() => handleToggleActive(u)}
+                      >
+                        {Boolean(u.activo) ? (
+                          <Ban className="h-4 w-4" />
+                        ) : (
+                          <CheckCircle className="h-4 w-4" />
+                        )}
+                      </Button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+              {filteredUsers.length === 0 && (
+                <tr>
+                  <td colSpan="5" className="px-6 py-8 text-center text-muted-foreground">
+                    No se encontraron usuarios
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">
+          Mostrando {filteredUsers.length} de {total} usuarios
+        </div>
+        {totalPages > 1 && (
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="sm" onClick={() => goToPage(page - 1)} disabled={page <= 1}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <Button key={p} variant={p === page ? 'default' : 'outline'} size="sm" className="min-w-9" onClick={() => goToPage(p)}>
+                {p}
+              </Button>
+            ))}
+            <Button variant="outline" size="sm" onClick={() => goToPage(page + 1)} disabled={page >= totalPages}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </div>
+
+      <Dialog open={isEditOpen} onOpenChange={(open) => { if (!open) { setIsEditOpen(false); setEditingUser(null); } }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Editar usuario</DialogTitle>
+          </DialogHeader>
+          {editingUser && (
+            <form onSubmit={handleEditUser} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-user-username">Nombre de usuario</Label>
+                  <Input
+                    id="edit-user-username"
+                    value={editingUser.username}
+                    onChange={(event) =>
+                      setEditingUser((current) => ({
+                        ...current,
+                        username: event.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-user-email">Email</Label>
+                  <Input
+                    id="edit-user-email"
+                    type="email"
+                    value={editingUser.email}
+                    onChange={(event) =>
+                      setEditingUser((current) => ({
+                        ...current,
+                        email: event.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-user-password">
+                    Nueva contraseña <span className="text-muted-foreground text-xs">(dejar en blanco para mantener)</span>
+                  </Label>
+                  <Input
+                    id="edit-user-password"
+                    type="password"
+                    value={editingUser.password || ""}
+                    onChange={(event) =>
+                      setEditingUser((current) => ({
+                        ...current,
+                        password: event.target.value,
+                      }))
+                    }
+                    placeholder="••••••••"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-user-role">Rol</Label>
+                  <Select
+                    value={editingUser.role}
+                    onValueChange={(value) =>
+                      setEditingUser((current) => ({ ...current, role: value }))
+                    }
+                  >
+                    <SelectTrigger id="edit-user-role" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="operator">Operador</SelectItem>
+                      <SelectItem value="admin">Administrador</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => { setIsEditOpen(false); setEditingUser(null); }}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={isSaving}>
+                  {isSaving ? "Guardando..." : "Guardar cambios"}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isViewOpen} onOpenChange={(open) => { if (!open) { setIsViewOpen(false); setViewingUser(null); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Información del usuario</DialogTitle>
+          </DialogHeader>
+          {viewingUser && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 pb-4 border-b border-border">
+                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                  {viewingUser.role === "admin" ? (
+                    <Shield className="h-7 w-7 text-primary" />
+                  ) : (
+                    <UserCog className="h-7 w-7 text-muted-foreground" />
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">{viewingUser.username}</h3>
+                  <p className="text-sm text-muted-foreground">{viewingUser.email}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">ID</p>
+                  <p className="font-medium text-foreground">{viewingUser.id_user}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Rol</p>
+                  <p className="font-medium text-foreground">
+                    {viewingUser.role === "admin" ? "Administrador" : "Operador"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Estado</p>
+                  <span
+                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      Boolean(viewingUser.activo)
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                        : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                    }`}
+                  >
+                    {Boolean(viewingUser.activo) ? "Activo" : "Inactivo"}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Creado</p>
+                  <p className="font-medium text-foreground">{formatDate(viewingUser.created_at)}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Última actualización</p>
+                  <p className="font-medium text-foreground">{formatDate(viewingUser.updated_at)}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setIsViewOpen(false); setViewingUser(null); }}>
+              Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

@@ -1,13 +1,13 @@
 'use client'
 
-import { Users, MapPin, Package, Truck, Calendar, DollarSign, LogOut, Menu, X, LayoutDashboard, User } from 'lucide-react'
+import { Users, MapPin, Package, Truck, Calendar, DollarSign, LogOut, Menu, X, LayoutDashboard, User, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ProfileDialog } from '@/components/profile-dialog'
 import { useState } from 'react'
 import { Logo } from '@/components/logo'
 
-export function Sidebar({ activeModule, onModuleChange, onLogout, userEmail, userName, onProfileUpdate }) {
+export function Sidebar({ activeModule, onModuleChange, onLogout, userEmail, userName, onProfileUpdate, userRole }) {
   const [isOpen, setIsOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
 
@@ -18,6 +18,7 @@ export function Sidebar({ activeModule, onModuleChange, onLogout, userEmail, use
     { id: 'packages', label: 'Paquetes', icon: Package },
     { id: 'vehicles', label: 'Vehículos', icon: Truck },
     { id: 'reservations', label: 'Reservas', icon: Calendar },
+    ...(userRole === 'admin' ? [{ id: 'users', label: 'Usuarios', icon: Shield }] : []),
   ]
 
   return (

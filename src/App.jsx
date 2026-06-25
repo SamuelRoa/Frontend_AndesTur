@@ -10,6 +10,7 @@ import { DestinationsModule } from "@/components/modules/destinations-module";
 import { PackagesModule } from "@/components/modules/packages-module";
 import { VehiclesModule } from "@/components/modules/vehicles-module";
 import { ReservationsModule } from "@/components/modules/reservations-module";
+import { UsersModule } from "@/components/modules/users-module";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { GlobalSearch } from "@/components/global-search";
 import { useAuth } from "@/lib/auth";
@@ -51,6 +52,8 @@ export default function App() {
         return <VehiclesModule />;
       case "reservations":
         return <ReservationsModule />;
+      case "users":
+        return <UsersModule />;
       default:
         return <Dashboard onNavigate={setActiveModule} />;
     }
@@ -118,6 +121,7 @@ export default function App() {
         onLogout={logout}
         userEmail={user?.email}
         userName={user?.username}
+        userRole={user?.role}
         onProfileUpdate={(data) => {
           const updated = { ...user, ...data };
           localStorage.setItem('auth_user', JSON.stringify(updated));
