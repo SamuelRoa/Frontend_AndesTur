@@ -20,8 +20,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { users as usersApi } from "@/lib/api";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { users as usersApi, auth as authApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { RolesTab } from "./roles-tab";
 import {
   Plus,
   Search,
@@ -145,6 +152,18 @@ export function UsersModule() {
     }
   };
 
+  const handleForcePasswordReset = async () => {
+    if (!editingUser) return;
+    if (!confirm("¿Estás seguro de que deseas forzar el reinicio de contraseña para este usuario? Se enviará un correo con una contraseña temporal.")) return;
+    try {
+      await authApi.forgotPassword(editingUser.email);
+      alert("Correo de recuperación enviado con éxito.");
+    } catch (err) {
+      console.error("Error forzando reinicio:", err);
+      alert(err?.message || "Error al forzar reinicio de contraseña");
+    }
+  };
+
   const handleToggleActive = async (u) => {
     const nextActive = !Boolean(u.activo);
     try {
@@ -184,14 +203,23 @@ export function UsersModule() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="font-serif text-3xl font-bold text-foreground">
-            Usuarios
+            Gestión de Seguridad
           </h1>
           <p className="text-muted-foreground mt-1">
-            Gestión de operadores y administradores del sistema
+            Administra los usuarios, operadores y permisos del sistema
           </p>
         </div>
+      </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+      <Tabs defaultValue="users" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="users">Usuarios</TabsTrigger>
+          <TabsTrigger value="roles">Roles y Permisos</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="users" className="space-y-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="relative w-full sm:max-w-md">
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto">
@@ -457,21 +485,10 @@ export function UsersModule() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-user-password">
-                    Nueva contraseña <span className="text-muted-foreground text-xs">(dejar en blanco para mantener)</span>
-                  </Label>
-                  <Input
-                    id="edit-user-password"
-                    type="password"
-                    value={editingUser.password || ""}
-                    onChange={(event) =>
-                      setEditingUser((current) => ({
-                        ...current,
-                        password: event.target.value,
-                      }))
-                    }
-                    placeholder="••••••••"
-                  />
+                  <Label>Seguridad</Label>
+                  <Button type="button" variant="outline" className="w-full text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-200" onClick={handleForcePasswordReset}>
+                    Forzar Reinicio de Contraseña
+                  </Button>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-user-role">Rol</Label>
@@ -566,6 +583,12 @@ export function UsersModule() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </TabsContent>
+      
+      <TabsContent value="roles">
+        <RolesTab />
+      </TabsContent>
+    </Tabs>
     </div>
   );
 }

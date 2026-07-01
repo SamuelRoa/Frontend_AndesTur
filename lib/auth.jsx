@@ -11,13 +11,23 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('auth_token')
-    const storedUser = localStorage.getItem('auth_user')
-    if (storedToken && storedUser) {
-      setToken(storedToken)
-      setUser(JSON.parse(storedUser))
+    const initAuth = async () => {
+      const storedToken = localStorage.getItem('auth_token')
+      const storedUser = localStorage.getItem('auth_user')
+      if (storedToken && storedUser) {
+        try {
+          const res = await authApi.getProfile()
+          setToken(storedToken)
+          setUser(res.data)
+          localStorage.setItem('auth_user', JSON.stringify(res.data))
+        } catch (err) {
+          localStorage.removeItem('auth_token')
+          localStorage.removeItem('auth_user')
+        }
+      }
+      setLoading(false)
     }
-    setLoading(false)
+    initAuth()
   }, [])
 
   const login = useCallback(async (email, password) => {

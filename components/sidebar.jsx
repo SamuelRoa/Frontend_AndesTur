@@ -7,19 +7,32 @@ import { ProfileDialog } from '@/components/profile-dialog'
 import { useState } from 'react'
 import { Logo } from '@/components/logo'
 
-export function Sidebar({ activeModule, onModuleChange, onLogout, userEmail, userName, onProfileUpdate, userRole }) {
+export function Sidebar({ activeModule, onModuleChange, onLogout, userEmail, userName, onProfileUpdate, userRole, userPermissions = [] }) {
   const [isOpen, setIsOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
 
-  const modules = [
+  const hasPermission = (moduleName) => {
+    // Fallback de seguridad: si es administrador, siempre tiene acceso
+    if (userRole === 'admin' || userRole === 1) return true;
+    if (userPermissions && userPermissions.includes('*')) return true;
+    if (!userPermissions) return false;
+    return userPermissions.includes(`${moduleName}:read`);
+  };
+
+  const allModules = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'employees', label: 'Empleados', icon: Users },
-    { id: 'destinations', label: 'Destinos', icon: MapPin },
-    { id: 'packages', label: 'Paquetes', icon: Package },
-    { id: 'vehicles', label: 'Vehículos', icon: Truck },
-    { id: 'reservations', label: 'Reservas', icon: Calendar },
-    ...(userRole === 'admin' ? [{ id: 'users', label: 'Usuarios', icon: Shield }] : []),
+    { id: 'employees', label: 'Empleados', icon: Users, permission: 'staff' },
+    { id: 'destinations', label: 'Destinos', icon: MapPin, permission: 'destinations' },
+    { id: 'packages', label: 'Paquetes', icon: Package, permission: 'packages' },
+    { id: 'vehicles', label: 'Vehículos', icon: Truck, permission: 'vehicles' },
+    { id: 'reservations', label: 'Reservas', icon: Calendar, permission: 'reservations' },
+    { id: 'users', label: 'Usuarios', icon: Shield, permission: 'users' },
   ]
+
+  const modules = allModules.filter(m => {
+    if (m.id === 'dashboard') return true;
+    return hasPermission(m.permission || m.id);
+  });
 
   return (
     <>

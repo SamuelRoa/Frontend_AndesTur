@@ -16,7 +16,7 @@ import { GlobalSearch } from "@/components/global-search";
 import { useAuth } from "@/lib/auth";
 
 export default function App() {
-  const { user, login, register, logout } = useAuth();
+  const { user, loading, login, register, logout } = useAuth();
   const { theme, resolvedTheme } = useTheme();
   const [mode, setMode] = useState("login");
   const [activeModule, setActiveModule] = useState("dashboard");
@@ -65,6 +65,14 @@ export default function App() {
     currentTheme === "dark"
       ? "linear-gradient(rgba(3, 7, 18, 0.66), rgba(3, 7, 18, 0.86)), url(/Laguna_de_Mucubaj%C3%AD,_Merida,_Venezuela.jpg)"
       : "linear-gradient(rgba(248, 244, 235, 0.55), rgba(248, 244, 235, 0.85)), url(/Laguna_de_Mucubaj%C3%AD,_Merida,_Venezuela.jpg)";
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -122,6 +130,7 @@ export default function App() {
         userEmail={user?.email}
         userName={user?.username}
         userRole={user?.role}
+        userPermissions={user?.permissions}
         onProfileUpdate={(data) => {
           const updated = { ...user, ...data };
           localStorage.setItem('auth_user', JSON.stringify(updated));
