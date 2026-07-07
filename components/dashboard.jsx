@@ -278,6 +278,7 @@ export function Dashboard({ onNavigate }) {
                   <Tooltip 
                     contentStyle={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px' }}
                     labelStyle={{ color: 'var(--foreground)' }}
+                    itemStyle={{ color: 'var(--foreground)' }}
                   />
                   <Legend />
                 </PieChart>
@@ -305,6 +306,7 @@ export function Dashboard({ onNavigate }) {
                   <Tooltip 
                     contentStyle={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px' }}
                     cursor={{ fill: 'var(--muted)' }}
+                    itemStyle={{ color: 'var(--foreground)' }}
                   />
                   <Bar dataKey="reservas" fill="#0288D1" name="Reservas Nuevas" radius={[4, 4, 0, 0]} />
                 </BarChart>
@@ -333,6 +335,7 @@ export function Dashboard({ onNavigate }) {
                 <Tooltip
                   contentStyle={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px' }}
                   labelStyle={{ color: 'var(--foreground)' }}
+                  itemStyle={{ color: 'var(--foreground)' }}
                   formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Ingresos']}
                 />
                 <Line type="monotone" dataKey="ingresos" stroke="#0288D1" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
@@ -355,6 +358,7 @@ export function Dashboard({ onNavigate }) {
                 <Tooltip 
                   contentStyle={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px' }}
                   cursor={{ fill: 'var(--muted)' }}
+                  itemStyle={{ color: 'var(--foreground)' }}
                 />
                 <Bar dataKey="count" fill="#10B981" name="Destinos" radius={[4, 4, 0, 0]}>
                   <LabelList dataKey="count" position="top" className="text-xs fill-foreground" />

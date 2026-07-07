@@ -85,8 +85,14 @@ export function VehiclesModule() {
     }
   }
 
+  const normalizeStatus = (status) => {
+    if (status === 'true' || status === true) return 'active'
+    if (status === 'false' || status === false) return 'maintenance'
+    return status || 'active'
+  }
+
   const openEditDialog = (veh) => {
-    setEditingVehicle({ ...veh })
+    setEditingVehicle({ ...veh, status: normalizeStatus(veh.status) })
     setIsEditOpen(true)
   }
 
@@ -172,7 +178,15 @@ export function VehiclesModule() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="vehicle-status">Estado</Label>
-                    <Input id="vehicle-status" value={newVehicle.status} onChange={(e) => setNewVehicle((c) => ({ ...c, status: e.target.value }))} placeholder="active" />
+                    <select
+                      id="vehicle-status"
+                      value={newVehicle.status}
+                      onChange={(e) => setNewVehicle((c) => ({ ...c, status: e.target.value }))}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="active">Activo</option>
+                      <option value="maintenance">En Mantenimiento</option>
+                    </select>
                   </div>
                 </div>
                 <DialogFooter>
@@ -292,7 +306,15 @@ export function VehiclesModule() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-vehicle-status">Estado</Label>
-                  <Input id="edit-vehicle-status" value={editingVehicle.status || 'active'} onChange={(e) => setEditingVehicle((c) => ({ ...c, status: e.target.value }))} />
+                  <select
+                    id="edit-vehicle-status"
+                    value={editingVehicle.status || 'active'}
+                    onChange={(e) => setEditingVehicle((c) => ({ ...c, status: e.target.value }))}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="active">Activo</option>
+                    <option value="maintenance">En Mantenimiento</option>
+                  </select>
                 </div>
               </div>
               <DialogFooter>
