@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { roles as rolesApi } from "@/lib/api";
@@ -74,9 +75,10 @@ export function RolesTab() {
       await rolesApi.update(editingRole.id_role, { permissions: editingRole.permissions });
       setRoles(roles.map((r) => (r.id_role === editingRole.id_role ? editingRole : r)));
       setEditingRole(null);
+      toast.success("Permisos actualizados correctamente");
     } catch (err) {
       console.error("Error updating role:", err);
-      alert("Error actualizando permisos del rol");
+      toast.error("Error actualizando permisos del rol");
     } finally {
       setSaving(false);
     }

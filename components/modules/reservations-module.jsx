@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -119,9 +120,10 @@ export function ReservationsModule() {
       await loadReservations()
       setIsCreateOpen(false)
       setNewReservation({ id_package: '', id_customer: '', reservation_date: new Date().toISOString().slice(0, 10), pay_state: 'pending' })
+      toast.success('Reserva creada correctamente')
     } catch (err) {
       console.error('Error creating reservation:', err)
-      alert(err?.message || 'Error creando reserva')
+      toast.error(err?.message || 'Error creando reserva')
     } finally {
       setIsSaving(false)
     }
@@ -146,9 +148,10 @@ export function ReservationsModule() {
       await loadReservations()
       setIsEditOpen(false)
       setEditingReservation(null)
+      toast.success('Reserva actualizada correctamente')
     } catch (err) {
       console.error('Error updating reservation:', err)
-      alert(err?.message || 'Error actualizando reserva')
+      toast.error(err?.message || 'Error actualizando reserva')
     } finally {
       setIsSaving(false)
     }
@@ -159,9 +162,10 @@ export function ReservationsModule() {
     try {
       await reservations.delete(id)
       await loadReservations()
+      toast.success('Reserva eliminada correctamente')
     } catch (err) {
       console.error('Error deleting reservation:', err)
-      alert(err?.message || 'Error eliminando reserva')
+      toast.error(err?.message || 'Error eliminando reserva')
     }
   }
 
@@ -171,9 +175,10 @@ export function ReservationsModule() {
     try {
       await reservations.update(id, { pay_state: 'paid' })
       await loadReservations()
+      toast.success('Reserva aprobada correctamente')
     } catch (err) {
       console.error('Error approving reservation:', err)
-      alert(err?.message || 'Error al aprobar la reserva')
+      toast.error(err?.message || 'Error al aprobar la reserva')
     } finally {
       setIsSaving(false)
     }

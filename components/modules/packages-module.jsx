@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   Card,
   CardContent,
@@ -91,9 +92,10 @@ export function PackagesModule() {
       await loadPackages();
       setIsCreateOpen(false);
       setNewPackage({ name: "", description: "", departure_date: "", return_date: "", price: "", available_places: "" });
+      toast.success("Paquete creado correctamente");
     } catch (err) {
       console.error("Error creating package:", err);
-      alert(err?.message || "Error creando paquete");
+      toast.error(err?.message || "Error creando paquete");
     } finally {
       setIsSaving(false);
     }
@@ -120,9 +122,10 @@ export function PackagesModule() {
       await loadPackages();
       setIsEditOpen(false);
       setEditingPackage(null);
+      toast.success("Paquete actualizado correctamente");
     } catch (err) {
       console.error("Error updating package:", err);
-      alert(err?.message || "Error actualizando paquete");
+      toast.error(err?.message || "Error actualizando paquete");
     } finally {
       setIsSaving(false);
     }
@@ -133,9 +136,10 @@ export function PackagesModule() {
     try {
       await packages.delete(id);
       await loadPackages();
+      toast.success("Paquete eliminado correctamente");
     } catch (err) {
       console.error("Error deleting package:", err);
-      alert(err?.message || "Error eliminando paquete");
+      toast.error(err?.message || "Error eliminando paquete");
     }
   };
 

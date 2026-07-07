@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,7 @@ import {
   Shield,
   UserCog,
   Eye,
+  EyeOff,
   Ban,
   CheckCircle,
 } from "lucide-react";
@@ -55,12 +57,21 @@ export function UsersModule() {
   const [viewingUser, setViewingUser] = useState(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [newUser, setNewUser] = useState({
     username: "",
     email: "",
     password: "",
     role: "operator",
   });
+
+  const PASSWORD_REQUIREMENTS = [
+    { label: "Mínimo 8 caracteres", test: (p) => p.length >= 8 },
+    { label: "Al menos una mayúscula", test: (p) => /[A-Z]/.test(p) },
+    { label: "Al menos una minúscula", test: (p) => /[a-z]/.test(p) },
+    { label: "Al menos un número", test: (p) => /\d/.test(p) },
+    { label: "Al menos un carácter especial (!@#$%^&*)", test: (p) => /[!@#$%^&*]/.test(p) },
+  ];
 
   const isAdmin = currentUser?.role === "admin";
 
@@ -95,9 +106,21 @@ export function UsersModule() {
     loadUsers(p);
   };
 
+  const validatePassword = (password) => {
+    const failed = PASSWORD_REQUIREMENTS.filter((r) => !r.test(password));
+    return failed.map((r) => r.label);
+  };
+
   const handleCreateUser = async (event) => {
     event.preventDefault();
     if (!newUser.username || !newUser.email || !newUser.password) return;
+
+    const failedReqs = validatePassword(newUser.password);
+    if (failedReqs.length > 0) {
+      toast.error(`La contraseña debe cumplir: ${failedReqs.join(", ")}`);
+      return;
+    }
+
     setIsSaving(true);
     try {
       await usersApi.create({
@@ -109,9 +132,10 @@ export function UsersModule() {
       await loadUsers();
       setIsCreateOpen(false);
       setNewUser({ username: "", email: "", password: "", role: "operator" });
+      toast.success("Usuario creado correctamente");
     } catch (err) {
       console.error("Error creating user:", err);
-      alert(err?.message || "Error creando usuario");
+      toast.error(err?.message || "Error creando usuario");
     } finally {
       setIsSaving(false);
     }
@@ -144,9 +168,10 @@ export function UsersModule() {
       await loadUsers();
       setIsEditOpen(false);
       setEditingUser(null);
+      toast.success("Usuario actualizado correctamente");
     } catch (err) {
       console.error("Error updating user:", err);
-      alert(err?.message || "Error actualizando usuario");
+      toast.error(err?.message || "Error actualizando usuario");
     } finally {
       setIsSaving(false);
     }
@@ -157,10 +182,10 @@ export function UsersModule() {
     if (!confirm("¿Estás seguro de que deseas forzar el reinicio de contraseña para este usuario? Se enviará un correo con una contraseña temporal.")) return;
     try {
       await authApi.forgotPassword(editingUser.email);
-      alert("Correo de recuperación enviado con éxito.");
+      toast.success("Correo de recuperación enviado con éxito.");
     } catch (err) {
       console.error("Error forzando reinicio:", err);
-      alert(err?.message || "Error al forzar reinicio de contraseña");
+      toast.error(err?.message || "Error al forzar reinicio de contraseña");
     }
   };
 
@@ -175,9 +200,10 @@ export function UsersModule() {
             : item
         )
       );
+      toast.success(`Usuario ${nextActive ? "activado" : "desactivado"} correctamente`);
     } catch (err) {
       console.error("Error toggling user active state:", err);
-      alert(err?.message || "Error actualizando estado del usuario");
+      toast.error(err?.message || "Error actualizando estado del usuario");
     }
   };
 
@@ -266,18 +292,42 @@ export function UsersModule() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="user-password">Contraseña</Label>
-                    <Input
-                      id="user-password"
-                      type="password"
-                      value={newUser.password}
-                      onChange={(event) =>
-                        setNewUser((current) => ({
-                          ...current,
-                          password: event.target.value,
-                        }))
-                      }
-                      placeholder="••••••••"
-                    />
+                    <div className="relative">
+                      <Input
+                        id="user-password"
+                        type={showPassword ? "text" : "password"}
+                        value={newUser.password}
+                        onChange={(event) =>
+                          setNewUser((current) => ({
+                            ...current,
+                            password: event.target.value,
+                          }))
+                        }
+                        placeholder="••••••••"
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                    {newUser.password && (
+                      <div className="space-y-1 mt-2">
+                        {PASSWORD_REQUIREMENTS.map((req) => {
+                          const ok = req.test(newUser.password);
+                          return (
+                            <div key={req.label} className={`flex items-center gap-1.5 text-xs ${ok ? "text-green-600" : "text-muted-foreground"}`}>
+                              {ok ? "✓" : "○"} {req.label}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="user-role">Rol</Label>

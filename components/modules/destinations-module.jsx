@@ -1,14 +1,16 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { destinations } from '@/lib/api'
+import { destinations, municipalities, states } from '@/lib/api'
 import { ExportButton } from '@/components/export-button'
 import { Plus, Edit2, Trash2, Search, MapPin, ChevronLeft, ChevronRight } from 'lucide-react'
 
@@ -30,6 +32,15 @@ export function DestinationsModule() {
     image_url: '',
   })
   const [togglingActiveId, setTogglingActiveId] = useState(null)
+  const [municipalitiesList, setMunicipalitiesList] = useState([])
+  const [statesList, setStatesList] = useState([])
+  const [isMunicipalityOpen, setIsMunicipalityOpen] = useState(false)
+  const [newMunicipality, setNewMunicipality] = useState({
+    name: '',
+    id_state: '',
+    postal_code: '',
+  })
+  const [isSavingMunicipality, setIsSavingMunicipality] = useState(false)
 
   const loadDestinations = async (p = 1) => {
     setLoading(true)
@@ -48,8 +59,28 @@ export function DestinationsModule() {
     }
   }
 
+  const loadMunicipalities = async () => {
+    try {
+      const res = await municipalities.getAll()
+      setMunicipalitiesList(res.data)
+    } catch (err) {
+      console.error('Error loading municipalities:', err)
+    }
+  }
+
+  const loadStates = async () => {
+    try {
+      const res = await states.getAll()
+      setStatesList(res.data)
+    } catch (err) {
+      console.error('Error loading states:', err)
+    }
+  }
+
   useEffect(() => {
     loadDestinations()
+    loadMunicipalities()
+    loadStates()
   }, [])
 
   const filteredDestinations = destinationsList.filter((dest) => {
@@ -76,9 +107,10 @@ export function DestinationsModule() {
       await loadDestinations()
       setIsCreateOpen(false)
       setNewDestination({ id_municipality: '', name: '', description: '', image_url: '' })
+      toast.success('Destino creado correctamente')
     } catch (err) {
       console.error('Error creating destination:', err)
-      alert(err?.message || 'Error creando destino')
+      toast.error(err?.message || 'Error creando destino')
     } finally {
       setIsSaving(false)
     }
@@ -103,9 +135,10 @@ export function DestinationsModule() {
       await loadDestinations()
       setIsEditOpen(false)
       setEditingDestination(null)
+      toast.success('Destino actualizado correctamente')
     } catch (err) {
       console.error('Error updating destination:', err)
-      alert(err?.message || 'Error actualizando destino')
+      toast.error(err?.message || 'Error actualizando destino')
     } finally {
       setIsSaving(false)
     }
@@ -116,9 +149,34 @@ export function DestinationsModule() {
     try {
       await destinations.delete(id)
       await loadDestinations()
+      toast.success('Destino eliminado correctamente')
     } catch (err) {
       console.error('Error deleting destination:', err)
-      alert(err?.message || 'Error eliminando destino')
+      toast.error(err?.message || 'Error eliminando destino')
+    }
+  }
+
+  const handleCreateMunicipality = async (event) => {
+    event.preventDefault()
+    if (!newMunicipality.name.trim() || !newMunicipality.id_state) return
+    setIsSavingMunicipality(true)
+    try {
+      const res = await municipalities.create({
+        name: newMunicipality.name.trim(),
+        id_state: Number(newMunicipality.id_state),
+        postal_code: newMunicipality.postal_code ? Number(newMunicipality.postal_code) : undefined,
+      })
+      const createdId = res.data?.id_municipality || res.data?.id
+      await loadMunicipalities()
+      setNewDestination((current) => ({ ...current, id_municipality: String(createdId) }))
+      setIsMunicipalityOpen(false)
+      setNewMunicipality({ name: '', id_state: '', postal_code: '' })
+      toast.success('Municipio creado correctamente')
+    } catch (err) {
+      console.error('Error creating municipality:', err)
+      toast.error(err?.message || 'Error creando municipio')
+    } finally {
+      setIsSavingMunicipality(false)
     }
   }
 
@@ -135,9 +193,10 @@ export function DestinationsModule() {
             : item,
         ),
       )
+      toast.success(`Destino ${nextActive ? 'publicado' : 'en borrador'} correctamente`)
     } catch (err) {
       console.error('Error actualizando activo del destino:', err)
-      alert(err?.message || 'Error actualizando estado del destino')
+      toast.error(err?.message || 'Error actualizando estado del destino')
     } finally {
       setTogglingActiveId(null)
     }
@@ -179,15 +238,27 @@ export function DestinationsModule() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="destination-municipality">ID de municipio</Label>
-                  <Input
-                    id="destination-municipality"
-                    type="number"
-                    min="1"
-                    value={newDestination.id_municipality}
-                    onChange={(event) => setNewDestination((current) => ({ ...current, id_municipality: event.target.value }))}
-                    placeholder="Ej: 1"
-                  />
+                  <Label htmlFor="destination-municipality">Municipio</Label>
+                  <div className="flex gap-2">
+                    <Select
+                      value={newDestination.id_municipality?.toString() || ''}
+                      onValueChange={(value) => setNewDestination((current) => ({ ...current, id_municipality: value }))}
+                    >
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Seleccionar municipio..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {municipalitiesList.map((m) => (
+                          <SelectItem key={m.id_municipality} value={m.id_municipality.toString()}>
+                            {m.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button type="button" variant="outline" size="icon" onClick={() => setIsMunicipalityOpen(true)} title="Nuevo municipio">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="destination-description">Descripción</Label>
@@ -341,14 +412,27 @@ export function DestinationsModule() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-destination-municipality">ID de municipio</Label>
-                <Input
-                  id="edit-destination-municipality"
-                  type="number"
-                  min="1"
-                  value={editingDestination.id_municipality}
-                  onChange={(event) => setEditingDestination((current) => ({ ...current, id_municipality: event.target.value }))}
-                />
+                <Label htmlFor="edit-destination-municipality">Municipio</Label>
+                <div className="flex gap-2">
+                  <Select
+                    value={editingDestination.id_municipality?.toString() || ''}
+                    onValueChange={(value) => setEditingDestination((current) => ({ ...current, id_municipality: value }))}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Seleccionar municipio..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {municipalitiesList.map((m) => (
+                        <SelectItem key={m.id_municipality} value={m.id_municipality.toString()}>
+                          {m.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button type="button" variant="outline" size="icon" onClick={() => setIsMunicipalityOpen(true)} title="Nuevo municipio">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-destination-description">Descripción</Label>
@@ -384,6 +468,59 @@ export function DestinationsModule() {
               </DialogFooter>
             </form>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isMunicipalityOpen} onOpenChange={setIsMunicipalityOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nuevo municipio</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCreateMunicipality} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="municipality-name">Nombre del municipio</Label>
+              <Input
+                id="municipality-name"
+                value={newMunicipality.name}
+                onChange={(e) => setNewMunicipality((prev) => ({ ...prev, name: e.target.value }))}
+                placeholder="Ej: Libertador"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="municipality-state">Estado</Label>
+              <Select
+                value={newMunicipality.id_state?.toString() || ''}
+                onValueChange={(value) => setNewMunicipality((prev) => ({ ...prev, id_state: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar estado..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {statesList.map((s) => (
+                    <SelectItem key={s.id_state} value={s.id_state.toString()}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="municipality-postal-code">Código postal</Label>
+              <Input
+                id="municipality-postal-code"
+                type="number"
+                value={newMunicipality.postal_code}
+                onChange={(e) => setNewMunicipality((prev) => ({ ...prev, postal_code: e.target.value }))}
+                placeholder="Ej: 5101"
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => { setIsMunicipalityOpen(false); setNewMunicipality({ name: '', id_state: '', postal_code: '' }) }}>Cancelar</Button>
+              <Button type="submit" disabled={isSavingMunicipality}>
+                {isSavingMunicipality ? 'Guardando...' : 'Crear municipio'}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

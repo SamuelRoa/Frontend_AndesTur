@@ -1,15 +1,17 @@
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { auth } from '@/lib/api'
-import { User, Lock, Globe } from 'lucide-react'
+import { User, Lock, Globe, Eye, EyeOff } from 'lucide-react'
 
 export function ProfileDialog({ open, onClose, user, onSave }) {
   const [tab, setTab] = useState('profile')
   const [saving, setSaving] = useState(false)
+  const [showPasswords, setShowPasswords] = useState({ current: false, new: false, confirm: false })
   const [profileForm, setProfileForm] = useState({
     username: user?.username || '',
     email: user?.email || '',
@@ -39,10 +41,10 @@ export function ProfileDialog({ open, onClose, user, onSave }) {
         email: profileForm.email.trim(),
       })
       if (onSave) onSave(profileForm)
-      alert('Perfil actualizado correctamente')
+      toast.success('Perfil actualizado correctamente')
       onClose()
     } catch (err) {
-      alert(err?.message || 'Error actualizando perfil')
+      toast.error(err?.message || 'Error actualizando perfil')
     } finally {
       setSaving(false)
     }
@@ -51,11 +53,11 @@ export function ProfileDialog({ open, onClose, user, onSave }) {
   const handlePasswordSubmit = async (e) => {
     e.preventDefault()
     if (passwordForm.new_password !== passwordForm.confirm_password) {
-      alert('Las contraseñas no coinciden')
+      toast.error('Las contraseñas no coinciden')
       return
     }
     if (passwordForm.new_password.length < 8) {
-      alert('La contraseña debe tener al menos 8 caracteres')
+      toast.error('La contraseña debe tener al menos 8 caracteres')
       return
     }
     setSaving(true)
@@ -64,10 +66,10 @@ export function ProfileDialog({ open, onClose, user, onSave }) {
         current_password: passwordForm.current_password,
         new_password: passwordForm.new_password,
       })
-      alert('Contraseña actualizada correctamente')
+      toast.success('Contraseña actualizada correctamente')
       setPasswordForm({ current_password: '', new_password: '', confirm_password: '' })
     } catch (err) {
-      alert(err?.message || 'Error cambiando contraseña')
+      toast.error(err?.message || 'Error cambiando contraseña')
     } finally {
       setSaving(false)
     }
@@ -115,15 +117,30 @@ export function ProfileDialog({ open, onClose, user, onSave }) {
             <form onSubmit={handlePasswordSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="current-password">Contraseña actual</Label>
-                <Input id="current-password" name="current_password" type="password" value={passwordForm.current_password} onChange={handlePasswordChange} required />
+                <div className="relative">
+                  <Input id="current-password" name="current_password" type={showPasswords.current ? 'text' : 'password'} value={passwordForm.current_password} onChange={handlePasswordChange} required className="pr-10" />
+                  <button type="button" aria-label={showPasswords.current ? 'Ocultar' : 'Mostrar'} onClick={() => setShowPasswords((s) => ({ ...s, current: !s.current }))} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none" tabIndex={-1}>
+                    {showPasswords.current ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="new-password">Nueva contraseña</Label>
-                <Input id="new-password" name="new_password" type="password" value={passwordForm.new_password} onChange={handlePasswordChange} required />
+                <div className="relative">
+                  <Input id="new-password" name="new_password" type={showPasswords.new ? 'text' : 'password'} value={passwordForm.new_password} onChange={handlePasswordChange} required className="pr-10" />
+                  <button type="button" aria-label={showPasswords.new ? 'Ocultar' : 'Mostrar'} onClick={() => setShowPasswords((s) => ({ ...s, new: !s.new }))} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none" tabIndex={-1}>
+                    {showPasswords.new ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirm-password">Confirmar nueva contraseña</Label>
-                <Input id="confirm-password" name="confirm_password" type="password" value={passwordForm.confirm_password} onChange={handlePasswordChange} required />
+                <div className="relative">
+                  <Input id="confirm-password" name="confirm_password" type={showPasswords.confirm ? 'text' : 'password'} value={passwordForm.confirm_password} onChange={handlePasswordChange} required className="pr-10" />
+                  <button type="button" aria-label={showPasswords.confirm ? 'Ocultar' : 'Mostrar'} onClick={() => setShowPasswords((s) => ({ ...s, confirm: !s.confirm }))} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none" tabIndex={-1}>
+                    {showPasswords.confirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>

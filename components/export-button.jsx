@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { Download, FileText, FileSpreadsheet, File, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -19,7 +20,7 @@ export function ExportButton({ moduleName = 'datos' }) {
     try {
       await downloadExport(moduleName, format)
     } catch (err) {
-      alert(`Error al exportar: ${err.message}`)
+      toast.error(`Error al exportar: ${err.message}`)
     } finally {
       setLoading(null)
     }

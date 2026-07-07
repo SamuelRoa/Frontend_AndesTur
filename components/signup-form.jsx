@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,6 +10,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Logo } from '@/components/logo'
 
 export function SignupForm({ onSuccess }) {
+  const PASSWORD_REQUIREMENTS = [
+    { label: 'Mínimo 8 caracteres', test: (p) => p.length >= 8 },
+    { label: 'Al menos una mayúscula', test: (p) => /[A-Z]/.test(p) },
+    { label: 'Al menos una minúscula', test: (p) => /[a-z]/.test(p) },
+    { label: 'Al menos un número', test: (p) => /\d/.test(p) },
+    { label: 'Al menos un carácter especial (!@#$%^&*)', test: (p) => /[!@#$%^&*]/.test(p) },
+  ]
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -40,8 +49,9 @@ export function SignupForm({ onSuccess }) {
       return
     }
 
-    if (formData.password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres')
+    const failedReqs = PASSWORD_REQUIREMENTS.filter((r) => !r.test(formData.password))
+    if (failedReqs.length > 0) {
+      setError('La contraseña debe cumplir: ' + failedReqs.map((r) => r.label).join(', '))
       return
     }
 
@@ -138,6 +148,18 @@ export function SignupForm({ onSuccess }) {
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
+            {formData.password && (
+              <div className="space-y-1 mt-2">
+                {PASSWORD_REQUIREMENTS.map((req) => {
+                  const ok = req.test(formData.password)
+                  return (
+                    <div key={req.label} className={`flex items-center gap-1.5 text-xs ${ok ? 'text-green-600' : 'text-muted-foreground'}`}>
+                      {ok ? '✓' : '○'} {req.label}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
 
           <div className="space-y-2 relative">

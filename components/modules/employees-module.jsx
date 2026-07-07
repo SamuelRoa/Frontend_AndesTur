@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,9 +88,10 @@ export function EmployeesModule() {
       await loadEmployees();
       setIsCreateOpen(false);
       setNewEmployee({ name: "", last_name: "", dni: "", type: "guide" });
+      toast.success("Empleado creado correctamente");
     } catch (err) {
       console.error("Error creating staff:", err);
-      alert(err?.message || "Error creando empleado");
+      toast.error(err?.message || "Error creando empleado");
     } finally {
       setIsSaving(false);
     }
@@ -114,9 +116,10 @@ export function EmployeesModule() {
       await loadEmployees();
       setIsEditOpen(false);
       setEditingEmployee(null);
+      toast.success("Empleado actualizado correctamente");
     } catch (err) {
       console.error("Error updating staff:", err);
-      alert(err?.message || "Error actualizando empleado");
+      toast.error(err?.message || "Error actualizando empleado");
     } finally {
       setIsSaving(false);
     }
@@ -127,9 +130,10 @@ export function EmployeesModule() {
     try {
       await staff.delete(id);
       await loadEmployees();
+      toast.success("Empleado eliminado correctamente");
     } catch (err) {
       console.error("Error deleting staff:", err);
-      alert(err?.message || "Error eliminando empleado");
+      toast.error(err?.message || "Error eliminando empleado");
     }
   };
 

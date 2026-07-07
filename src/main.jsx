@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { ThemeProvider } from '@/components/theme-provider'
 import { AuthProvider } from '@/lib/auth'
+import { Toaster } from '@/components/ui/sonner'
 import App from './App'
 import '@/styles/globals.css'
 
@@ -17,6 +18,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       >
         <AuthProvider>
           <App />
+          <Toaster richColors closeButton position="top-center" />
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

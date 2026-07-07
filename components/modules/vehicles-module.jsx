@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -75,9 +76,10 @@ export function VehiclesModule() {
       await loadVehicles()
       setIsCreateOpen(false)
       setNewVehicle({ plate: '', brand: '', model: '', capacity: '', status: 'active' })
+      toast.success('Vehículo creado correctamente')
     } catch (err) {
       console.error('Error creating vehicle:', err)
-      alert(err?.message || 'Error creando vehículo')
+      toast.error(err?.message || 'Error creando vehículo')
     } finally {
       setIsSaving(false)
     }
@@ -103,9 +105,10 @@ export function VehiclesModule() {
       await loadVehicles()
       setIsEditOpen(false)
       setEditingVehicle(null)
+      toast.success('Vehículo actualizado correctamente')
     } catch (err) {
       console.error('Error updating vehicle:', err)
-      alert(err?.message || 'Error actualizando vehículo')
+      toast.error(err?.message || 'Error actualizando vehículo')
     } finally {
       setIsSaving(false)
     }
@@ -116,9 +119,10 @@ export function VehiclesModule() {
     try {
       await vehicles.delete(id)
       await loadVehicles()
+      toast.success('Vehículo eliminado correctamente')
     } catch (err) {
       console.error('Error deleting vehicle:', err)
-      alert(err?.message || 'Error eliminando vehículo')
+      toast.error(err?.message || 'Error eliminando vehículo')
     }
   }
 
