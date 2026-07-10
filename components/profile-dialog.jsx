@@ -1,26 +1,38 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { auth } from '@/lib/api'
-import { User, Lock, Globe, Eye, EyeOff } from 'lucide-react'
+import { User, Lock, Camera, Trash2, Eye, EyeOff } from 'lucide-react'
 
 export function ProfileDialog({ open, onClose, user, onSave }) {
   const [tab, setTab] = useState('profile')
   const [saving, setSaving] = useState(false)
   const [showPasswords, setShowPasswords] = useState({ current: false, new: false, confirm: false })
+  const fileInputRef = useRef(null)
   const [profileForm, setProfileForm] = useState({
     username: user?.username || '',
     email: user?.email || '',
   })
+  const [avatar, setAvatar] = useState(user?.avatar || null)
   const [passwordForm, setPasswordForm] = useState({
     current_password: '',
     new_password: '',
     confirm_password: '',
   })
+
+  useEffect(() => {
+    if (open) {
+      setProfileForm({ username: user?.username || '', email: user?.email || '' })
+      setAvatar(user?.avatar || null)
+      setPasswordForm({ current_password: '', new_password: '', confirm_password: '' })
+      setTab('profile')
+    }
+  }, [open, user])
 
   const handleProfileChange = (e) => {
     const { name, value } = e.target
@@ -32,15 +44,31 @@ export function ProfileDialog({ open, onClose, user, onSave }) {
     setPasswordForm((prev) => ({ ...prev, [name]: value }))
   }
 
+  const handleAvatarSelect = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('La imagen debe ser menor a 2MB')
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = (event) => setAvatar(event.target.result)
+    reader.readAsDataURL(file)
+  }
+
   const handleProfileSubmit = async (e) => {
     e.preventDefault()
     setSaving(true)
     try {
-      await auth.updateProfile({
+      const payload = {
         username: profileForm.username.trim(),
         email: profileForm.email.trim(),
-      })
-      if (onSave) onSave(profileForm)
+      }
+      const originalAvatar = user?.avatar || null
+      if (avatar !== originalAvatar) payload.avatar = avatar
+
+      await auth.updateProfile(payload)
+      if (onSave) onSave({ ...profileForm, avatar })
       toast.success('Perfil actualizado correctamente')
       onClose()
     } catch (err) {
@@ -80,24 +108,58 @@ export function ProfileDialog({ open, onClose, user, onSave }) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Configuración de cuenta</DialogTitle>
-          <DialogDescription>Administra tu perfil, contraseña y redes sociales</DialogDescription>
+          <DialogDescription>Administra tu perfil y contraseña</DialogDescription>
         </DialogHeader>
 
         <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="h-4 w-4" /> Perfil
             </TabsTrigger>
             <TabsTrigger value="password" className="flex items-center gap-2">
               <Lock className="h-4 w-4" /> Contraseña
             </TabsTrigger>
-            <TabsTrigger value="social" className="flex items-center gap-2">
-              <Globe className="h-4 w-4" /> Redes
-            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile" className="mt-4">
             <form onSubmit={handleProfileSubmit} className="space-y-4">
+              <div className="flex flex-col items-center gap-3">
+                <div className="relative group">
+                  <Avatar className="size-24">
+                    {avatar ? (
+                      <AvatarImage src={avatar} alt="Foto de perfil" />
+                    ) : null}
+                    <AvatarFallback className="text-2xl bg-muted">
+                      <User className="size-8" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    aria-label="Cambiar foto de perfil"
+                  >
+                    <Camera className="size-6 text-white" />
+                  </button>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarSelect}
+                />
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                    <Camera className="h-4 w-4 mr-1" /> Cargar foto
+                  </Button>
+                  {avatar && (
+                    <Button type="button" variant="outline" size="sm" className="text-destructive hover:bg-destructive/10 border-destructive/30" onClick={() => setAvatar(null)}>
+                      <Trash2 className="h-4 w-4 mr-1" /> Eliminar
+                    </Button>
+                  )}
+                </div>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="profile-username">Nombre de usuario</Label>
                 <Input id="profile-username" name="username" value={profileForm.username} onChange={handleProfileChange} />
@@ -147,35 +209,6 @@ export function ProfileDialog({ open, onClose, user, onSave }) {
                 <Button type="submit" disabled={saving}>{saving ? 'Guardando...' : 'Cambiar contraseña'}</Button>
               </div>
             </form>
-          </TabsContent>
-
-          <TabsContent value="social" className="mt-4">
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">Síguenos en nuestras redes sociales:</p>
-              <div className="space-y-3">
-                <a href="https://www.instagram.com/andestur_21/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg bg-muted hover:bg-accent transition-colors">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">IG</div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Instagram</p>
-                    <p className="text-xs text-muted-foreground">@andestur_21</p>
-                  </div>
-                </a>
-                <a href="https://www.facebook.com/profile.php?id=61560503802533" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg bg-muted hover:bg-accent transition-colors">
-                  <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm">FB</div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Facebook</p>
-                    <p className="text-xs text-muted-foreground">AndesTur</p>
-                  </div>
-                </a>
-                <a href="https://x.com/AndesTur_21" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg bg-muted hover:bg-accent transition-colors">
-                  <div className="w-10 h-10 rounded-full bg-black dark:bg-white flex items-center justify-center text-white dark:text-black font-bold text-sm">X</div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">X (Twitter)</p>
-                    <p className="text-xs text-muted-foreground">@AndesTur_21</p>
-                  </div>
-                </a>
-              </div>
-            </div>
           </TabsContent>
         </Tabs>
       </DialogContent>

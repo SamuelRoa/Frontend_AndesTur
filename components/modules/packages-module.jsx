@@ -23,9 +23,13 @@ import {
 } from "@/components/ui/dialog";
 import { packages } from "@/lib/api";
 import { ExportButton } from "@/components/export-button";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { useAuth } from "@/lib/auth";
 import { Plus, Edit2, Trash2, Search, ChevronLeft, ChevronRight } from "lucide-react";
 
 export function PackagesModule() {
+  const { user } = useAuth();
+  const canWrite = user?.role === "admin" || user?.role === 1 || user?.permissions?.includes("*") || user?.permissions?.includes("packages:write");
   const [packagesList, setPackagesList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -36,6 +40,7 @@ export function PackagesModule() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingPackage, setEditingPackage] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
   const [newPackage, setNewPackage] = useState({
     name: "",
     description: "",
@@ -131,11 +136,12 @@ export function PackagesModule() {
     }
   };
 
-  const handleDeletePackage = async (id) => {
-    if (!confirm("¿Estás seguro de eliminar este paquete?")) return;
+  const handleDeletePackage = async () => {
+    if (!deleteId) return;
     try {
-      await packages.delete(id);
+      await packages.delete(deleteId);
       await loadPackages();
+      setDeleteId(null);
       toast.success("Paquete eliminado correctamente");
     } catch (err) {
       console.error("Error deleting package:", err);
@@ -157,6 +163,7 @@ export function PackagesModule() {
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <ExportButton moduleName="paquetes" />
+          {canWrite && (
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto">
@@ -200,10 +207,11 @@ export function PackagesModule() {
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>Cancelar</Button>
                   <Button type="submit" disabled={isSaving}>{isSaving ? "Guardando..." : "Crear paquete"}</Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+          )}
         </div>
       </div>
 
@@ -234,14 +242,16 @@ export function PackagesModule() {
                   <p className="font-serif text-2xl font-bold text-secondary">{pkg.available_places ?? "N/A"}</p>
                 </div>
               </div>
+              {canWrite && (
               <div className="flex gap-2 pt-4 border-t border-border">
                 <Button variant="outline" size="sm" className="flex-1 border-border" onClick={() => openEditDialog(pkg)}>
                   <Edit2 className="h-4 w-4 mr-1" /> Editar
                 </Button>
-                <Button variant="outline" size="sm" className="flex-1 border-border text-destructive hover:bg-destructive/10" onClick={() => handleDeletePackage(pkg.id_package)}>
+                <Button variant="outline" size="sm" className="flex-1 border-border text-destructive hover:bg-destructive/10" onClick={() => setDeleteId(pkg.id_package)}>
                   <Trash2 className="h-4 w-4 mr-1" /> Eliminar
                 </Button>
               </div>
+              )}
             </CardContent>
           </Card>
         ))}
@@ -312,6 +322,17 @@ export function PackagesModule() {
           )}
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={deleteId !== null}
+        onConfirm={handleDeletePackage}
+        onCancel={() => setDeleteId(null)}
+        title="Eliminar paquete"
+        message="¿Estás seguro de eliminar este paquete?"
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        destructive
+      />
     </div>
   );
 }

@@ -30,6 +30,7 @@ import {
 import { users as usersApi, auth as authApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { RolesTab } from "./roles-tab";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import {
   Plus,
   Search,
@@ -41,6 +42,8 @@ import {
   EyeOff,
   Ban,
   CheckCircle,
+  Trash2,
+  Lock,
 } from "lucide-react";
 
 export function UsersModule() {
@@ -58,6 +61,11 @@ export function UsersModule() {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, user: null });
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
   const [newUser, setNewUser] = useState({
     username: "",
     email: "",
@@ -74,6 +82,7 @@ export function UsersModule() {
   ];
 
   const isAdmin = currentUser?.role === "admin";
+  const canWrite = isAdmin || currentUser?.role === 1 || currentUser?.permissions?.includes("*") || currentUser?.permissions?.includes("users:write");
 
   const loadUsers = async (p = 1) => {
     setLoading(true);
@@ -179,9 +188,9 @@ export function UsersModule() {
 
   const handleForcePasswordReset = async () => {
     if (!editingUser) return;
-    if (!confirm("¿Estás seguro de que deseas forzar el reinicio de contraseña para este usuario? Se enviará un correo con una contraseña temporal.")) return;
     try {
       await authApi.forgotPassword(editingUser.email);
+      setConfirmReset(false);
       toast.success("Correo de recuperación enviado con éxito.");
     } catch (err) {
       console.error("Error forzando reinicio:", err);
@@ -204,6 +213,32 @@ export function UsersModule() {
     } catch (err) {
       console.error("Error toggling user active state:", err);
       toast.error(err?.message || "Error actualizando estado del usuario");
+    }
+  };
+
+  const openDeleteDialog = (u) => {
+    setDeleteDialog({ open: true, user: u });
+    setDeletePassword("");
+    setDeleteError("");
+  };
+
+  const handleDeleteUser = async () => {
+    if (!deletePassword) {
+      setDeleteError("Ingresa tu contraseña para confirmar");
+      return;
+    }
+    setIsDeleting(true);
+    setDeleteError("");
+    try {
+      await usersApi.delete(deleteDialog.user.id_user, deletePassword);
+      setUsers((current) => current.filter((item) => item.id_user !== deleteDialog.user.id_user));
+      setDeleteDialog({ open: false, user: null });
+      setDeletePassword("");
+      toast.success(`Usuario "${deleteDialog.user.username}" eliminado correctamente`);
+    } catch (err) {
+      setDeleteError(err.message || "Error al eliminar usuario");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -246,6 +281,7 @@ export function UsersModule() {
         <TabsContent value="users" className="space-y-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="relative w-full sm:max-w-md">
+          {canWrite && (
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto">
@@ -358,6 +394,7 @@ export function UsersModule() {
               </form>
             </DialogContent>
           </Dialog>
+          )}
         </div>
       </div>
 
@@ -380,7 +417,7 @@ export function UsersModule() {
                 <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Email</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Rol</th>
                 <th className="px-6 py-3 text-center text-sm font-semibold text-foreground">Estado</th>
-                <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">Acciones</th>
+                <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">{canWrite ? "Acciones" : "Ver"}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -435,6 +472,7 @@ export function UsersModule() {
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
+                    {canWrite && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -443,7 +481,8 @@ export function UsersModule() {
                     >
                       <UserCog className="h-4 w-4" />
                     </Button>
-                    {u.id_user !== currentUser?.id_user && (
+                    )}
+                    {canWrite && u.id_user !== currentUser?.id_user && (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -459,6 +498,16 @@ export function UsersModule() {
                         ) : (
                           <CheckCircle className="h-4 w-4" />
                         )}
+                      </Button>
+                    )}
+                    {canWrite && u.id_user !== currentUser?.id_user && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        onClick={() => openDeleteDialog(u)}
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     )}
                   </td>
@@ -536,7 +585,7 @@ export function UsersModule() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Seguridad</Label>
-                  <Button type="button" variant="outline" className="w-full text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-200" onClick={handleForcePasswordReset}>
+                  <Button type="button" variant="outline" className="w-full text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-200" onClick={() => setConfirmReset(true)}>
                     Forzar Reinicio de Contraseña
                   </Button>
                 </div>
@@ -639,6 +688,66 @@ export function UsersModule() {
         <RolesTab />
       </TabsContent>
     </Tabs>
+
+      <ConfirmDialog
+        open={confirmReset}
+        onConfirm={handleForcePasswordReset}
+        onCancel={() => setConfirmReset(false)}
+        title="Forzar reinicio de contraseña"
+        message="¿Estás seguro de que deseas forzar el reinicio de contraseña para este usuario? Se enviará un correo con una contraseña temporal."
+        confirmLabel="Enviar correo"
+        cancelLabel="Cancelar"
+      />
+
+      <Dialog open={deleteDialog.open} onOpenChange={(open) => { if (!open) { setDeleteDialog({ open: false, user: null }); setDeletePassword(""); setDeleteError(""); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="h-5 w-5" />
+              Eliminar usuario
+            </DialogTitle>
+          </DialogHeader>
+          {deleteDialog.user && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                ¿Estás seguro de eliminar a <strong>{deleteDialog.user.username}</strong> ({deleteDialog.user.email})?
+                Esta acción no se puede revertir.
+              </p>
+              <div className="rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-3 text-sm text-amber-800 dark:text-amber-300">
+                <p className="flex items-center gap-2">
+                  <Lock className="h-4 w-4 shrink-0" />
+                  Ingresa tu contraseña de administrador para confirmar
+                </p>
+              </div>
+              {deleteError && (
+                <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                  {deleteError}
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="delete-password">Tu contraseña</Label>
+                <Input
+                  id="delete-password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={deletePassword}
+                  onChange={(e) => { setDeletePassword(e.target.value); setDeleteError(""); }}
+                  className="border-border"
+                  autoFocus
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setDeleteDialog({ open: false, user: null }); setDeletePassword(""); setDeleteError(""); }}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteUser} disabled={isDeleting || !deletePassword}>
+              {isDeleting ? "Eliminando..." : "Eliminar usuario"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -23,9 +23,13 @@ import {
 } from "@/components/ui/dialog";
 import { staff } from "@/lib/api";
 import { ExportButton } from "@/components/export-button";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { useAuth } from "@/lib/auth";
 import { Plus, Edit2, Trash2, Search, ChevronLeft, ChevronRight } from "lucide-react";
 
 export function EmployeesModule() {
+  const { user } = useAuth();
+  const canWrite = user?.role === "admin" || user?.role === 1 || user?.permissions?.includes("*") || user?.permissions?.includes("staff:write");
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -36,6 +40,7 @@ export function EmployeesModule() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
   const [newEmployee, setNewEmployee] = useState({
     name: "",
     last_name: "",
@@ -125,11 +130,12 @@ export function EmployeesModule() {
     }
   };
 
-  const handleDeleteEmployee = async (id) => {
-    if (!confirm("¿Estás seguro de eliminar este empleado?")) return;
+  const handleDeleteEmployee = async () => {
+    if (!deleteId) return;
     try {
-      await staff.delete(id);
+      await staff.delete(deleteId);
       await loadEmployees();
+      setDeleteId(null);
       toast.success("Empleado eliminado correctamente");
     } catch (err) {
       console.error("Error deleting staff:", err);
@@ -159,6 +165,7 @@ export function EmployeesModule() {
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <ExportButton moduleName="empleados" />
+          {canWrite && (
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto">
@@ -166,85 +173,86 @@ export function EmployeesModule() {
                 Nuevo Empleado
               </Button>
             </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Nuevo empleado</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleCreateEmployee} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="employee-name">Nombre</Label>
-                  <Input
-                    id="employee-name"
-                    value={newEmployee.name}
-                    onChange={(event) =>
-                      setNewEmployee((current) => ({
-                        ...current,
-                        name: event.target.value,
-                      }))
-                    }
-                    placeholder="Ana"
-                  />
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Nuevo empleado</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleCreateEmployee} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="employee-name">Nombre</Label>
+                    <Input
+                      id="employee-name"
+                      value={newEmployee.name}
+                      onChange={(event) =>
+                        setNewEmployee((current) => ({
+                          ...current,
+                          name: event.target.value,
+                        }))
+                      }
+                      placeholder="Ana"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="employee-last-name">Apellido</Label>
+                    <Input
+                      id="employee-last-name"
+                      value={newEmployee.last_name}
+                      onChange={(event) =>
+                        setNewEmployee((current) => ({
+                          ...current,
+                          last_name: event.target.value,
+                        }))
+                      }
+                      placeholder="López"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="employee-last-name">Apellido</Label>
-                  <Input
-                    id="employee-last-name"
-                    value={newEmployee.last_name}
-                    onChange={(event) =>
-                      setNewEmployee((current) => ({
-                        ...current,
-                        last_name: event.target.value,
-                      }))
-                    }
-                    placeholder="López"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="employee-dni">DNI</Label>
+                    <Input
+                      id="employee-dni"
+                      value={newEmployee.dni}
+                      onChange={(event) =>
+                        setNewEmployee((current) => ({
+                          ...current,
+                          dni: event.target.value,
+                        }))
+                      }
+                      placeholder="12345678"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="employee-type">Tipo</Label>
+                    <Select
+                      value={newEmployee.type}
+                      onValueChange={(value) =>
+                        setNewEmployee((current) => ({ ...current, type: value }))
+                      }
+                    >
+                      <SelectTrigger id="employee-type" className="w-full">
+                        <SelectValue placeholder="Selecciona el tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="guide">Guía</SelectItem>
+                        <SelectItem value="driver">Conductor</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="employee-dni">DNI</Label>
-                  <Input
-                    id="employee-dni"
-                    value={newEmployee.dni}
-                    onChange={(event) =>
-                      setNewEmployee((current) => ({
-                        ...current,
-                        dni: event.target.value,
-                      }))
-                    }
-                    placeholder="12345678"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="employee-type">Tipo</Label>
-                  <Select
-                    value={newEmployee.type}
-                    onValueChange={(value) =>
-                      setNewEmployee((current) => ({ ...current, type: value }))
-                    }
-                  >
-                    <SelectTrigger id="employee-type" className="w-full">
-                      <SelectValue placeholder="Selecciona el tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="guide">Guía</SelectItem>
-                      <SelectItem value="driver">Conductor</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={isSaving}>
-                  {isSaving ? "Guardando..." : "Crear empleado"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={isSaving}>
+                    {isSaving ? "Guardando..." : "Crear empleado"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+          )}
         </div>
       </div>
 
@@ -267,7 +275,7 @@ export function EmployeesModule() {
                 <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Apellido</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">DNI</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Tipo</th>
-                <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">Acciones</th>
+                {canWrite && <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">Acciones</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -281,6 +289,7 @@ export function EmployeesModule() {
                       {emp.type === "guide" ? "Guía" : emp.type === "driver" ? "Conductor" : emp.type}
                     </span>
                   </td>
+                  {canWrite && (
                   <td className="px-6 py-4 text-right space-x-2 flex justify-end">
                     <Button
                       variant="ghost"
@@ -294,11 +303,12 @@ export function EmployeesModule() {
                       variant="ghost"
                       size="sm"
                       className="text-destructive hover:bg-destructive/10"
-                      onClick={() => handleDeleteEmployee(emp.id_staff)}
+                      onClick={() => setDeleteId(emp.id_staff)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </td>
+                  )}
                 </tr>
               ))}
               {filteredEmployees.length === 0 && (
@@ -413,6 +423,17 @@ export function EmployeesModule() {
           )}
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={deleteId !== null}
+        onConfirm={handleDeleteEmployee}
+        onCancel={() => setDeleteId(null)}
+        title="Eliminar empleado"
+        message="¿Estás seguro de eliminar este empleado?"
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        destructive
+      />
     </div>
   );
 }

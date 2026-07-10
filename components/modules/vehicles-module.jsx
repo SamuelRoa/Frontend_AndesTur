@@ -9,9 +9,13 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { vehicles } from '@/lib/api'
 import { ExportButton } from '@/components/export-button'
+import { ConfirmDialog } from '@/components/confirm-dialog'
+import { useAuth } from '@/lib/auth'
 import { Plus, Edit2, Trash2, Search, Wrench, ChevronLeft, ChevronRight } from 'lucide-react'
 
 export function VehiclesModule() {
+  const { user } = useAuth()
+  const canWrite = user?.role === 'admin' || user?.role === 1 || user?.permissions?.includes('*') || user?.permissions?.includes('vehicles:write')
   const [vehicleList, setVehicleList] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -22,6 +26,7 @@ export function VehiclesModule() {
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [editingVehicle, setEditingVehicle] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [deleteId, setDeleteId] = useState(null)
   const [newVehicle, setNewVehicle] = useState({
     plate: '',
     brand: '',
@@ -88,7 +93,8 @@ export function VehiclesModule() {
   const normalizeStatus = (status) => {
     if (status === 'true' || status === true) return 'active'
     if (status === 'false' || status === false) return 'maintenance'
-    return status || 'active'
+    if (['active', 'maintenance', 'inactive'].includes(status)) return status
+    return 'active'
   }
 
   const openEditDialog = (veh) => {
@@ -120,11 +126,12 @@ export function VehiclesModule() {
     }
   }
 
-  const handleDeleteVehicle = async (id) => {
-    if (!confirm('¿Estás seguro de eliminar este vehículo?')) return
+  const handleDeleteVehicle = async () => {
+    if (!deleteId) return
     try {
-      await vehicles.delete(id)
+      await vehicles.delete(deleteId)
       await loadVehicles()
+      setDeleteId(null)
       toast.success('Vehículo eliminado correctamente')
     } catch (err) {
       console.error('Error deleting vehicle:', err)
@@ -146,6 +153,7 @@ export function VehiclesModule() {
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <ExportButton moduleName="vehiculos" />
+          {canWrite && (
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto">
@@ -186,6 +194,7 @@ export function VehiclesModule() {
                     >
                       <option value="active">Activo</option>
                       <option value="maintenance">En Mantenimiento</option>
+                      <option value="inactive">Inactivo</option>
                     </select>
                   </div>
                 </div>
@@ -196,6 +205,7 @@ export function VehiclesModule() {
               </form>
             </DialogContent>
           </Dialog>
+          )}
         </div>
       </div>
 
@@ -214,12 +224,18 @@ export function VehiclesModule() {
                 <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Modelo</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Capacidad</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Estado</th>
-                <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">Acciones</th>
+                {canWrite && <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">Acciones</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {filteredVehicles.map((veh) => {
-                const isActive = veh.status === 'true' || veh.status === 'active'
+                const status = normalizeStatus(veh.status)
+                const statusConfig = {
+                  active: { label: 'Activo', classes: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400', icon: null },
+                  maintenance: { label: 'En Mantenimiento', classes: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400', icon: <Wrench className="h-4 w-4 text-orange-600" /> },
+                  inactive: { label: 'Inactivo', classes: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400', icon: null },
+                }
+                const cfg = statusConfig[status] || statusConfig.active
                 return (
                   <tr key={veh.id_vehicle} className="hover:bg-muted/50 transition-colors">
                     <td className="px-6 py-4 text-sm font-medium text-primary">{veh.plate}</td>
@@ -228,24 +244,22 @@ export function VehiclesModule() {
                     <td className="px-6 py-4 text-sm text-foreground font-medium">{veh.capacity} pax</td>
                     <td className="px-6 py-4 text-sm">
                       <div className="flex items-center gap-2">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                          isActive
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                            : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                        }`}>
-                          {isActive ? 'Activo' : 'En Mantenimiento'}
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${cfg.classes}`}>
+                          {cfg.label}
                         </span>
-                        {!isActive && <Wrench className="h-4 w-4 text-orange-600" />}
+                        {cfg.icon}
                       </div>
                     </td>
+                    {canWrite && (
                     <td className="px-6 py-4 text-right space-x-2 flex justify-end">
                       <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10" onClick={() => openEditDialog(veh)}>
                         <Edit2 className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10" onClick={() => handleDeleteVehicle(veh.id_vehicle)}>
+                      <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10" onClick={() => setDeleteId(veh.id_vehicle)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </td>
+                    )}
                   </tr>
                 )
               })}
@@ -314,6 +328,7 @@ export function VehiclesModule() {
                   >
                     <option value="active">Activo</option>
                     <option value="maintenance">En Mantenimiento</option>
+                    <option value="inactive">Inactivo</option>
                   </select>
                 </div>
               </div>
@@ -325,6 +340,17 @@ export function VehiclesModule() {
           )}
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={deleteId !== null}
+        onConfirm={handleDeleteVehicle}
+        onCancel={() => setDeleteId(null)}
+        title="Eliminar vehículo"
+        message="¿Estás seguro de eliminar este vehículo?"
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        destructive
+      />
     </div>
   )
 }

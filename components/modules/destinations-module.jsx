@@ -12,9 +12,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch'
 import { destinations, municipalities, states } from '@/lib/api'
 import { ExportButton } from '@/components/export-button'
+import { ConfirmDialog } from '@/components/confirm-dialog'
+import { useAuth } from '@/lib/auth'
 import { Plus, Edit2, Trash2, Search, MapPin, ChevronLeft, ChevronRight } from 'lucide-react'
 
 export function DestinationsModule() {
+  const { user } = useAuth()
+  const canWrite = user?.role === 'admin' || user?.role === 1 || user?.permissions?.includes('*') || user?.permissions?.includes('destinations:write')
   const [destinationsList, setDestinationsList] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -41,6 +45,7 @@ export function DestinationsModule() {
     postal_code: '',
   })
   const [isSavingMunicipality, setIsSavingMunicipality] = useState(false)
+  const [deleteId, setDeleteId] = useState(null)
 
   const loadDestinations = async (p = 1) => {
     setLoading(true)
@@ -144,11 +149,12 @@ export function DestinationsModule() {
     }
   }
 
-  const handleDeleteDestination = async (id) => {
-    if (!confirm('¿Estás seguro de eliminar este destino?')) return
+  const handleDeleteDestination = async () => {
+    if (!deleteId) return
     try {
-      await destinations.delete(id)
+      await destinations.delete(deleteId)
       await loadDestinations()
+      setDeleteId(null)
       toast.success('Destino eliminado correctamente')
     } catch (err) {
       console.error('Error deleting destination:', err)
@@ -216,6 +222,7 @@ export function DestinationsModule() {
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <ExportButton moduleName="destinos" />
+          {canWrite && (
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto">
@@ -296,6 +303,7 @@ export function DestinationsModule() {
               </form>
             </DialogContent>
           </Dialog>
+          )}
         </div>
       </div>
 
@@ -357,16 +365,18 @@ export function DestinationsModule() {
                 <span className="font-semibold">Ruta de imagen:</span>{' '}
                 {dest.image_url ? dest.image_url : 'No definida'}
               </div>
+              {canWrite && (
               <div className="flex gap-2 pt-4 border-t border-border">
                 <Button variant="outline" size="sm" className="flex-1 border-border" onClick={() => openEditDialog(dest)}>
                   <Edit2 className="h-4 w-4 mr-1" />
                   Editar
                 </Button>
-                <Button variant="outline" size="sm" className="flex-1 border-border text-destructive hover:bg-destructive/10" onClick={() => handleDeleteDestination(dest.id_destination)}>
+                <Button variant="outline" size="sm" className="flex-1 border-border text-destructive hover:bg-destructive/10" onClick={() => setDeleteId(dest.id_destination)}>
                   <Trash2 className="h-4 w-4 mr-1" />
                   Eliminar
                 </Button>
               </div>
+              )}
             </CardContent>
           </Card>
         ))}
@@ -523,6 +533,17 @@ export function DestinationsModule() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={deleteId !== null}
+        onConfirm={handleDeleteDestination}
+        onCancel={() => setDeleteId(null)}
+        title="Eliminar destino"
+        message="¿Estás seguro de eliminar este destino?"
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        destructive
+      />
     </div>
   )
 }

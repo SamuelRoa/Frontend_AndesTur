@@ -8,7 +8,6 @@ import { roles as rolesApi } from "@/lib/api";
 import { Shield, Save, CheckCircle, XCircle } from "lucide-react";
 
 const MODULES = [
-  { id: "staff", label: "Empleados" },
   { id: "destinations", label: "Destinos" },
   { id: "packages", label: "Paquetes" },
   { id: "vehicles", label: "Vehículos" },

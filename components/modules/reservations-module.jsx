@@ -10,9 +10,13 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { customers, packages, reservations, paymentHeaders, destinations } from '@/lib/api'
 import { ExportButton } from '@/components/export-button'
+import { ConfirmDialog } from '@/components/confirm-dialog'
+import { useAuth } from '@/lib/auth'
 import { Plus, Edit2, Trash2, Search, CheckCircle, Clock, ChevronLeft, ChevronRight } from 'lucide-react'
 
 export function ReservationsModule() {
+  const { user } = useAuth()
+  const canWrite = user?.role === 'admin' || user?.role === 1 || user?.permissions?.includes('*') || user?.permissions?.includes('reservations:write')
   const [reservationList, setReservationList] = useState([])
   const [customersList, setCustomersList] = useState([])
   const [packagesList, setPackagesList] = useState([])
@@ -29,6 +33,7 @@ export function ReservationsModule() {
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [editingReservation, setEditingReservation] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [confirmAction, setConfirmAction] = useState(null)
   const [newReservation, setNewReservation] = useState({
     id_package: '',
     id_customer: '',
@@ -43,13 +48,18 @@ export function ReservationsModule() {
       if (payStateFilter && payStateFilter !== 'all') params.pay_state = payStateFilter
       if (destinationFilter && destinationFilter !== 'all') params.id_destination = destinationFilter
 
-      const [reservationRes, customerRes, packageRes, paymentHeaderRes, destRes] = await Promise.all([
+      const results = await Promise.allSettled([
         reservations.getAll(params),
         customers.getAll({ all: true }),
         packages.getAll({ all: true }),
         paymentHeaders.getAll({ all: true }),
         destinations.getAll({ all: true }),
       ])
+
+      const [reservationRes, customerRes, packageRes, paymentHeaderRes, destRes] = results.map(
+        (r) => (r.status === 'fulfilled' ? r.value : { data: [], pagination: null })
+      )
+
       setReservationList(reservationRes.data)
       if (reservationRes.pagination) {
         setPage(reservationRes.pagination.page)
@@ -60,6 +70,11 @@ export function ReservationsModule() {
       setPackagesList(packageRes.data)
       setPaymentHeaderList(paymentHeaderRes.data)
       setDestinationsList(destRes.data)
+
+      const errors = results.filter((r) => r.status === 'rejected')
+      if (errors.length > 0) {
+        errors.forEach((e) => console.warn('Error en carga de datos:', e.reason?.message || e.reason))
+      }
     } catch (err) {
       console.error('Error loading reservations:', err)
     } finally {
@@ -90,6 +105,7 @@ export function ReservationsModule() {
       customerEmail: customer?.email || 'Sin email',
       customerPhone: customer?.phone_number || 'Sin teléfono',
       packageName: pkg?.name || 'Paquete desconocido',
+      packagePrice: pkg?.price != null ? Number(pkg.price) : null,
       departureDate: pkg?.departure_date || null,
       returnDate: pkg?.return_date || null,
       totalAmount: paymentByReservationId[reservation.id_reservation] ?? null,
@@ -157,11 +173,12 @@ export function ReservationsModule() {
     }
   }
 
-  const handleDeleteReservation = async (id) => {
-    if (!confirm('¿Estás seguro de eliminar esta reserva?')) return
+  const handleDeleteReservation = async () => {
+    if (!confirmAction || confirmAction.type !== 'delete') return
     try {
-      await reservations.delete(id)
+      await reservations.delete(confirmAction.id)
       await loadReservations()
+      setConfirmAction(null)
       toast.success('Reserva eliminada correctamente')
     } catch (err) {
       console.error('Error deleting reservation:', err)
@@ -169,12 +186,13 @@ export function ReservationsModule() {
     }
   }
 
-  const handleApproveReservation = async (id) => {
-    if (!confirm('¿Estás seguro de aprobar y validar esta reserva? Se enviará un correo de confirmación al cliente.')) return
+  const handleApproveReservation = async () => {
+    if (!confirmAction || confirmAction.type !== 'approve') return
     setIsSaving(true)
     try {
-      await reservations.update(id, { pay_state: 'paid' })
+      await reservations.update(confirmAction.id, { pay_state: 'paid' })
       await loadReservations()
+      setConfirmAction(null)
       toast.success('Reserva aprobada correctamente')
     } catch (err) {
       console.error('Error approving reservation:', err)
@@ -208,6 +226,7 @@ export function ReservationsModule() {
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <ExportButton moduleName="reservas" />
+          {canWrite && (
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto">
@@ -271,10 +290,11 @@ export function ReservationsModule() {
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>Cancelar</Button>
                   <Button type="submit" disabled={isSaving}>{isSaving ? 'Guardando...' : 'Crear reserva'}</Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+          )}
         </div>
       </div>
 
@@ -353,35 +373,56 @@ export function ReservationsModule() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-primary/10 p-3 rounded-lg">
-                  <p className="text-xs text-muted-foreground mb-1">Total</p>
-                  <p className="font-serif text-xl font-bold text-primary">{reservation.totalAmount ? `$${Number(reservation.totalAmount).toLocaleString()}` : 'Sin pagos'}</p>
+                <div className="bg-primary/10 p-3 rounded-lg space-y-1">
+                  <p className="text-xs text-muted-foreground">Precio del paquete</p>
+                  <p className="font-serif text-xl font-bold text-primary">
+                    {reservation.packagePrice != null ? `$${reservation.packagePrice.toLocaleString()}` : 'Sin precio'}
+                  </p>
                 </div>
-                <div className="space-y-2">
-                  <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                    reservation.pay_state === 'paid'
-                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                      : reservation.pay_state === 'partial'
-                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                        : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                  }`}>
-                    {getPayStateLabel(reservation.pay_state)}
-                  </span>
+                <div className="bg-primary/10 p-3 rounded-lg space-y-1">
+                  <p className="text-xs text-muted-foreground">Total pagado</p>
+                  <p className="font-serif text-xl font-bold text-primary">
+                    {reservation.totalAmount != null ? `$${Number(reservation.totalAmount).toLocaleString()}` : 'Sin pagos'}
+                  </p>
                 </div>
               </div>
+              <div className="flex items-center justify-between">
+                <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${
+                  reservation.pay_state === 'paid'
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                    : reservation.pay_state === 'partial'
+                      ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                      : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                }`}>
+                  {getPayStateLabel(reservation.pay_state)}
+                </span>
+                {reservation.totalAmount != null && reservation.packagePrice != null && (
+                  <span className={`text-xs font-medium ${
+                    reservation.totalAmount >= reservation.packagePrice
+                      ? 'text-green-600 dark:text-green-400'
+                      : 'text-amber-600 dark:text-amber-400'
+                  }`}>
+                    {reservation.totalAmount >= reservation.packagePrice
+                      ? 'Cancelado'
+                      : `Saldo: $${(reservation.packagePrice - reservation.totalAmount).toLocaleString()}`}
+                  </span>
+                )}
+              </div>
+              {canWrite && (
               <div className="flex gap-2 pt-4 border-t border-border">
                 {reservation.pay_state !== 'paid' && (
-                  <Button variant="default" size="sm" className="flex-1 bg-green-600 hover:bg-green-700 text-white" onClick={() => handleApproveReservation(reservation.id_reservation)} disabled={isSaving}>
+                  <Button variant="default" size="sm" className="flex-1 bg-green-600 hover:bg-green-700 text-white" onClick={() => setConfirmAction({ type: 'approve', id: reservation.id_reservation })} disabled={isSaving}>
                     <CheckCircle className="h-4 w-4 mr-1" /> Aprobar
                   </Button>
                 )}
                 <Button variant="outline" size="sm" className="flex-1 border-border" onClick={() => openEditDialog(reservation)}>
                   <Edit2 className="h-4 w-4 mr-1" /> Editar
                 </Button>
-                <Button variant="outline" size="sm" className="flex-1 border-border text-destructive hover:bg-destructive/10" onClick={() => handleDeleteReservation(reservation.id_reservation)}>
+                <Button variant="outline" size="sm" className="flex-1 border-border text-destructive hover:bg-destructive/10" onClick={() => setConfirmAction({ type: 'delete', id: reservation.id_reservation })}>
                   <Trash2 className="h-4 w-4 mr-1" /> Cancelar
                 </Button>
               </div>
+              )}
             </CardContent>
           </Card>
         ))}
@@ -473,6 +514,27 @@ export function ReservationsModule() {
           )}
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={confirmAction?.type === 'delete'}
+        onConfirm={handleDeleteReservation}
+        onCancel={() => setConfirmAction(null)}
+        title="Eliminar reserva"
+        message="¿Estás seguro de eliminar esta reserva?"
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        destructive
+      />
+
+      <ConfirmDialog
+        open={confirmAction?.type === 'approve'}
+        onConfirm={handleApproveReservation}
+        onCancel={() => setConfirmAction(null)}
+        title="Aprobar reserva"
+        message="¿Estás seguro de aprobar y validar esta reserva? Se enviará un correo de confirmación al cliente."
+        confirmLabel="Aprobar"
+        cancelLabel="Cancelar"
+      />
     </div>
   )
 }

@@ -40,7 +40,12 @@ export function LoginForm({ onSuccess }) {
       setError('')
       await onSuccess(email, password)
     } catch (err) {
-      setError(err.message || 'Error al iniciar sesión')
+      const msg = err.message || 'Error al iniciar sesión'
+      if (msg.includes('desactivada')) {
+        setError('Cuenta desactivada. Contacta al administrador para restablecer el acceso.')
+      } else {
+        setError(msg)
+      }
     } finally {
       setLoading(false)
     }

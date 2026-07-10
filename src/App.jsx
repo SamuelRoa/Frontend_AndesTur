@@ -5,18 +5,22 @@ import { LoginForm } from "@/components/login-form";
 import { SignupForm } from "@/components/signup-form";
 import { Sidebar } from "@/components/sidebar";
 import { Dashboard } from "@/components/dashboard";
+import { DashboardOperador } from "@/components/dashboard-operator";
 import { EmployeesModule } from "@/components/modules/employees-module";
 import { DestinationsModule } from "@/components/modules/destinations-module";
 import { PackagesModule } from "@/components/modules/packages-module";
 import { VehiclesModule } from "@/components/modules/vehicles-module";
 import { ReservationsModule } from "@/components/modules/reservations-module";
 import { UsersModule } from "@/components/modules/users-module";
+import { TrashModule } from "@/components/modules/trash-module";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { GlobalSearch } from "@/components/global-search";
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
+import { User } from 'lucide-react'
 import { useAuth } from "@/lib/auth";
 
 export default function App() {
-  const { user, loading, login, register, logout } = useAuth();
+  const { user, loading, login, register, logout, updateUser } = useAuth();
   const { theme, resolvedTheme } = useTheme();
   const [mode, setMode] = useState("login");
   const [activeModule, setActiveModule] = useState("dashboard");
@@ -39,9 +43,12 @@ export default function App() {
   };
 
   const renderModule = () => {
+    const isAdmin = user?.role === 'admin' || user?.role === 1 || user?.permissions?.includes('*')
     switch (activeModule) {
       case "dashboard":
-        return <Dashboard onNavigate={setActiveModule} />;
+        return isAdmin
+          ? <Dashboard onNavigate={setActiveModule} userName={user?.username} />
+          : <DashboardOperador onNavigate={setActiveModule} userName={user?.username} />;
       case "employees":
         return <EmployeesModule />;
       case "destinations":
@@ -54,8 +61,12 @@ export default function App() {
         return <ReservationsModule />;
       case "users":
         return <UsersModule />;
+      case "trash":
+        return <TrashModule />;
       default:
-        return <Dashboard onNavigate={setActiveModule} />;
+        return isAdmin
+          ? <Dashboard onNavigate={setActiveModule} userName={user?.username} />
+          : <DashboardOperador onNavigate={setActiveModule} userName={user?.username} />;
     }
   };
 
@@ -131,18 +142,24 @@ export default function App() {
         userName={user?.username}
         userRole={user?.role}
         userPermissions={user?.permissions}
-        onProfileUpdate={(data) => {
-          const updated = { ...user, ...data };
-          localStorage.setItem('auth_user', JSON.stringify(updated));
-        }}
+        userAvatar={user?.avatar}
+        onProfileUpdate={(data) => updateUser(data)}
       />
       <main className="lg:ml-64 p-8">
         <div className="flex items-center justify-between mb-6 gap-4">
-          <p className="text-base font-semibold text-muted-foreground capitalize shrink-0">
-            {activeModule === "dashboard" ? "Dashboard" : activeModule}
-          </p>
           <GlobalSearch onNavigate={setActiveModule} />
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <div className="flex items-center gap-2 pl-2 border-l border-border">
+              <Avatar className="size-7">
+                {user?.avatar ? <AvatarImage src={user.avatar} /> : null}
+                <AvatarFallback className="text-xs">
+                  <User className="size-3.5" />
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm font-medium text-foreground hidden sm:inline">{user?.username}</span>
+            </div>
+          </div>
         </div>
         <ModuleWrapper moduleKey={activeModule}>{renderModule()}</ModuleWrapper>
       </main>

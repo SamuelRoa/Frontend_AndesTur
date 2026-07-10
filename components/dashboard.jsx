@@ -6,7 +6,7 @@ import { BarChart, Bar, LabelList, LineChart, Line, XAxis, YAxis, CartesianGrid,
 import { Users, MapPin, Package, Truck, DollarSign, Calendar } from 'lucide-react'
 import { staff, packages, destinations, vehicles, reservations, states, municipalities, packagesDestinations, paymentHeaders } from '@/lib/api'
 
-export function Dashboard({ onNavigate }) {
+export function Dashboard({ onNavigate, userName }) {
   const [stats, setStats] = useState(null)
   const [reservationsByMonth, setReservationsByMonth] = useState([])
   const [reservationsByState, setReservationsByState] = useState([])

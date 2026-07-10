@@ -1,13 +1,13 @@
 'use client'
 
-import { Users, MapPin, Package, Truck, Calendar, DollarSign, LogOut, Menu, X, LayoutDashboard, User, Shield } from 'lucide-react'
+import { Users, MapPin, Package, Truck, Calendar, DollarSign, LogOut, Menu, X, LayoutDashboard, User, Shield, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { ProfileDialog } from '@/components/profile-dialog'
 import { useState } from 'react'
 import { Logo } from '@/components/logo'
 
-export function Sidebar({ activeModule, onModuleChange, onLogout, userEmail, userName, onProfileUpdate, userRole, userPermissions = [] }) {
+export function Sidebar({ activeModule, onModuleChange, onLogout, userEmail, userName, userAvatar, onProfileUpdate, userRole, userPermissions = [] }) {
   const [isOpen, setIsOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
 
@@ -20,17 +20,19 @@ export function Sidebar({ activeModule, onModuleChange, onLogout, userEmail, use
   };
 
   const allModules = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'dashboard', label: 'Panel Principal', icon: LayoutDashboard },
     { id: 'employees', label: 'Empleados', icon: Users, permission: 'staff' },
     { id: 'destinations', label: 'Destinos', icon: MapPin, permission: 'destinations' },
     { id: 'packages', label: 'Paquetes', icon: Package, permission: 'packages' },
     { id: 'vehicles', label: 'Vehículos', icon: Truck, permission: 'vehicles' },
     { id: 'reservations', label: 'Reservas', icon: Calendar, permission: 'reservations' },
     { id: 'users', label: 'Usuarios', icon: Shield, permission: 'users' },
+    { id: 'trash', label: 'Papelera', icon: Trash2, adminOnly: true },
   ]
 
   const modules = allModules.filter(m => {
     if (m.id === 'dashboard') return true;
+    if (m.adminOnly) return userRole === 'admin' || userRole === 1 || userPermissions?.includes('*');
     return hasPermission(m.permission || m.id);
   });
 
@@ -82,28 +84,29 @@ export function Sidebar({ activeModule, onModuleChange, onLogout, userEmail, use
           </nav>
 
           <div className="border-t border-sidebar-border p-4 space-y-3">
-            <div className="flex items-center gap-3 px-2 py-2 bg-sidebar-accent rounded-lg">
-              <button
-                type="button"
-                aria-label="Perfil de usuario"
-                onClick={() => setProfileOpen(true)}
-                className="focus:outline-none"
-              >
-                <Avatar>
-                  <AvatarFallback>
-                    <User className="w-5 h-5" />
-                  </AvatarFallback>
-                </Avatar>
-              </button>
+            <button
+              type="button"
+              aria-label="Editar perfil"
+              onClick={() => setProfileOpen(true)}
+              className="flex items-center gap-3 px-2 py-2 bg-sidebar-accent rounded-lg w-full text-left hover:bg-sidebar-accent/80 transition-colors focus:outline-none"
+            >
+              <Avatar>
+                {userAvatar ? (
+                  <AvatarImage src={userAvatar} alt="Foto de perfil" />
+                ) : null}
+                <AvatarFallback>
+                  <User className="w-5 h-5" />
+                </AvatarFallback>
+              </Avatar>
               <div className="flex flex-col min-w-0">
                 <span className="text-xs text-sidebar-foreground/60">Conectado como</span>
                 <span className="text-sm font-medium text-sidebar-foreground truncate">{userName || userEmail}</span>
               </div>
-            </div>
+            </button>
             <ProfileDialog
               open={profileOpen}
               onClose={() => setProfileOpen(false)}
-              user={{ username: userName, email: userEmail }}
+              user={{ username: userName, email: userEmail, avatar: userAvatar }}
               onSave={(data) => { setProfileOpen(false); if (onProfileUpdate) onProfileUpdate(data) }}
             />
             <Button
