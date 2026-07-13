@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { destinations, municipalities, states } from '@/lib/api'
+import { ModuleSkeleton } from '@/components/module-skeleton'
 import { ExportButton } from '@/components/export-button'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { useAuth } from '@/lib/auth'
@@ -209,7 +210,7 @@ export function DestinationsModule() {
   }
 
   if (loading) {
-    return <div className="text-center text-muted-foreground py-8">Cargando destinos...</div>
+    return <ModuleSkeleton />
   }
 
   return (

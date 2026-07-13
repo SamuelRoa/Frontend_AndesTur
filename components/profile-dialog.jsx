@@ -105,7 +105,7 @@ export function ProfileDialog({ open, onClose, user, onSave }) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md border-border/40">
         <DialogHeader>
           <DialogTitle>Configuración de cuenta</DialogTitle>
           <DialogDescription>Administra tu perfil y contraseña</DialogDescription>

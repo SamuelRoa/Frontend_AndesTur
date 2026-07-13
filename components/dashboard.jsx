@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import { BarChart, Bar, LabelList, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { Users, MapPin, Package, Truck, DollarSign, Calendar } from 'lucide-react'
 import { staff, packages, destinations, vehicles, reservations, states, municipalities, packagesDestinations, paymentHeaders } from '@/lib/api'
@@ -214,11 +215,48 @@ export function Dashboard({ onNavigate, userName }) {
     { label: 'Total Reservas', value: stats?.totalReservations ?? '...', icon: Package, iconColor: 'text-teal-700 dark:text-teal-400', bgColor: 'bg-teal-50 dark:bg-teal-900/30', module: 'reservations' },
   ]
 
+  if (!stats) {
+    return (
+      <div className="space-y-8">
+        <div>
+          <Skeleton className="h-10 w-56 rounded-lg" />
+          <Skeleton className="h-5 w-80 mt-2 rounded-md" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="rounded-xl border border-border/50 bg-card/70 backdrop-blur-md p-6">
+              <div className="flex items-start justify-between">
+                <div className="space-y-3">
+                  <Skeleton className="h-4 w-28 rounded-md" />
+                  <Skeleton className="h-8 w-36 rounded-lg" />
+                </div>
+                <Skeleton className="size-12 rounded-xl" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="border-border/50">
+              <CardHeader>
+                <Skeleton className="h-5 w-44 rounded-md" />
+                <Skeleton className="h-4 w-56 rounded-md" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-[300px] w-full rounded-xl" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-serif text-4xl font-bold text-foreground mb-2">Dashboard</h1>
-        <p className="text-muted-foreground">Bienvenido al panel administrativo de AndesTur</p>
+        <h1 className="font-serif text-4xl font-bold text-foreground mb-1 tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground/80">Bienvenido al panel administrativo de AndesTur</p>
       </div>
 
       {/* Tarjetas Superiores */}
@@ -230,16 +268,16 @@ export function Dashboard({ onNavigate, userName }) {
               key={index}
               type="button"
               onClick={() => onNavigate?.(stat.module)}
-              className="text-left rounded-xl border border-border hover:shadow-lg transition-shadow focus:outline-none focus:ring-2 focus:ring-primary"
+              className="text-left rounded-xl border border-border/50 hover:shadow-float-lg hover:-translate-y-1 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary bg-card/70 backdrop-blur-md glass-surface-soft"
             >
               <Card className="h-full bg-transparent shadow-none border-none">
                 <CardContent className="pt-6">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground mb-1">{stat.label}</p>
-                      <p className={`${stat.valueClassName ?? 'font-serif text-3xl font-bold'} text-foreground`}>{stat.value}</p>
+                      <p className={`${stat.valueClassName ?? 'font-serif text-3xl font-bold tracking-tight'} text-foreground`}>{stat.value}</p>
                     </div>
-                    <div className={`${stat.bgColor} ${stat.iconColor} p-3 rounded-lg`}>
+                    <div className={`${stat.bgColor} ${stat.iconColor} p-3 rounded-xl shadow-float-sm transition-transform duration-300 group-hover:scale-110`}>
                       <Icon className="h-6 w-6" />
                     </div>
                   </div>
@@ -252,7 +290,7 @@ export function Dashboard({ onNavigate, userName }) {
 
       {/* Sección de Gráficas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border-border">
+        <Card className="border-border/50 shadow-float-md hover:shadow-float-lg transition-all duration-300">
           <CardHeader>
             <CardTitle>Estado de las Reservas</CardTitle>
             <CardDescription>Distribución porcentual de los estados de pago</CardDescription>
@@ -291,7 +329,7 @@ export function Dashboard({ onNavigate, userName }) {
           </CardContent>
         </Card>
 
-        <Card className="border-border">
+        <Card className="border-border/50 shadow-float-md hover:shadow-float-lg transition-all duration-300">
           <CardHeader>
             <CardTitle>Evolución de Reservas</CardTitle>
             <CardDescription>Cantidad de reservas creadas por mes</CardDescription>
@@ -321,7 +359,7 @@ export function Dashboard({ onNavigate, userName }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border-border">
+        <Card className="border-border/50 shadow-float-md hover:shadow-float-lg transition-all duration-300">
           <CardHeader>
             <CardTitle>Evolución de Ingresos Mensuales</CardTitle>
             <CardDescription>(Facturación en USD)</CardDescription>
@@ -344,7 +382,7 @@ export function Dashboard({ onNavigate, userName }) {
           </CardContent>
         </Card>
 
-        <Card className="border-border">
+        <Card className="border-border/50 shadow-float-md hover:shadow-float-lg transition-all duration-300">
           <CardHeader>
             <CardTitle>Cantidad de Destinos por Estado</CardTitle>
             <CardDescription>Cantidad de destinos turísticos por estado</CardDescription>

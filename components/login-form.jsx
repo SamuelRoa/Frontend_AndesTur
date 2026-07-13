@@ -79,9 +79,9 @@ export function LoginForm({ onSuccess }) {
 
   if (showRecovery) {
     return (
-      <Card className="w-full max-w-md border-border shadow-lg">
+      <Card className="w-full max-w-md border-border/40 shadow-float-xl backdrop-blur-2xl bg-card/75 glass-surface">
         <CardHeader className="space-y-2 flex flex-col items-center text-center">
-          <Logo size={64} className="mb-2" />
+          <Logo size={64} className="mb-2 drop-shadow-sm" />
           <CardTitle className="font-serif text-3xl text-primary">AndesTur</CardTitle>
           <CardDescription className="text-muted-foreground">Recuperar contraseña</CardDescription>
         </CardHeader>
@@ -144,9 +144,9 @@ export function LoginForm({ onSuccess }) {
   }
 
   return (
-    <Card className="w-full max-w-md border-border shadow-lg">
+    <Card className="w-full max-w-md border-border/40 shadow-float-xl backdrop-blur-2xl bg-card/75 glass-surface animate-float">
       <CardHeader className="space-y-2 flex flex-col items-center text-center">
-        <Logo size={64} className="mb-2" />
+        <Logo size={64} className="mb-2 drop-shadow-sm" />
         <CardTitle className="font-serif text-3xl text-primary">AndesTur</CardTitle>
         <CardDescription className="text-muted-foreground">Sistema Administrativo de Agencia Turística</CardDescription>
       </CardHeader>

@@ -158,13 +158,13 @@ export function GlobalSearch({ onNavigate }) {
           onFocus={() => setFocused(true)}
           onKeyDown={handleKeyDown}
           placeholder="Buscar en todos los módulos..."
-          className="pl-10 border-border bg-background"
+          className="pl-10 border-border bg-background/80 backdrop-blur-sm focus:bg-background"
         />
       </div>
       {focused && query.trim() && (
         <div
           ref={dropdownRef}
-          className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-xl z-50 max-h-80 overflow-y-auto"
+          className="absolute top-full left-0 right-0 mt-2 glass-panel-strong shadow-float-xl z-50 max-h-80 overflow-y-auto rounded-xl"
         >
           {loading ? (
             <div className="p-4 text-sm text-muted-foreground text-center">Cargando datos...</div>

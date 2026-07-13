@@ -28,6 +28,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { users as usersApi, auth as authApi } from "@/lib/api";
+import { ModuleSkeleton } from "@/components/module-skeleton";
 import { useAuth } from "@/lib/auth";
 import { RolesTab } from "./roles-tab";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -252,11 +253,7 @@ export function UsersModule() {
   };
 
   if (loading) {
-    return (
-      <div className="text-center text-muted-foreground py-8">
-        Cargando usuarios...
-      </div>
-    );
+    return <ModuleSkeleton />;
   }
 
   return (

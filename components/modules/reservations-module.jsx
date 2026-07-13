@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { customers, packages, reservations, paymentHeaders, destinations } from '@/lib/api'
+import { ModuleSkeleton } from '@/components/module-skeleton'
 import { ExportButton } from '@/components/export-button'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { useAuth } from '@/lib/auth'
@@ -213,7 +214,7 @@ export function ReservationsModule() {
   }
 
   if (loading) {
-    return <div className="text-center text-muted-foreground py-8">Cargando reservas...</div>
+    return <ModuleSkeleton />
   }
 
   return (

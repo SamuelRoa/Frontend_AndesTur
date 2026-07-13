@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { reservations, customers, packages, paymentHeaders, destinations } from '@/lib/api'
 import { Calendar, DollarSign, Users, Package, MapPin, CheckCircle, Clock, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -151,14 +152,31 @@ export function DashboardOperador({ onNavigate, userName }) {
     return (
       <div className="space-y-8">
         <div>
-          <h1 className="font-serif text-4xl font-bold text-foreground mb-2">Panel del Operador</h1>
-          <p className="text-muted-foreground">Bienvenido, {userName || 'Operador'}</p>
+          <Skeleton className="h-10 w-56 rounded-lg" />
+          <Skeleton className="h-5 w-72 mt-2 rounded-md" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i} className="border-border">
-              <CardContent className="pt-6">
-                <div className="h-20 animate-pulse bg-muted rounded" />
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="rounded-xl border border-border/50 bg-card/70 backdrop-blur-md p-6">
+              <div className="flex items-start justify-between">
+                <div className="space-y-3">
+                  <Skeleton className="h-4 w-28 rounded-md" />
+                  <Skeleton className="h-8 w-36 rounded-lg" />
+                </div>
+                <Skeleton className="size-12 rounded-xl" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <Card key={i} className="border-border/50">
+              <CardHeader>
+                <Skeleton className="h-5 w-44 rounded-md" />
+                <Skeleton className="h-4 w-56 rounded-md" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-[300px] w-full rounded-xl" />
               </CardContent>
             </Card>
           ))}

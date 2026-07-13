@@ -18,12 +18,14 @@ import { GlobalSearch } from "@/components/global-search";
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { User } from 'lucide-react'
 import { useAuth } from "@/lib/auth";
+import { ProfileDialog } from "@/components/profile-dialog";
 
 export default function App() {
   const { user, loading, login, register, logout, updateUser } = useAuth();
   const { theme, resolvedTheme } = useTheme();
   const [mode, setMode] = useState("login");
   const [activeModule, setActiveModule] = useState("dashboard");
+  const [profileOpen, setProfileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -88,7 +90,7 @@ export default function App() {
   if (!user) {
     return (
       <div
-        className="min-h-screen flex items-center justify-center p-4 relative bg-background"
+        className="min-h-screen flex items-center justify-center p-4 relative bg-background auth-vignette"
         style={{
           backgroundImage: authBackground,
           backgroundSize: "cover",
@@ -133,7 +135,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-premium">
       <Sidebar
         activeModule={activeModule}
         onModuleChange={setActiveModule}
@@ -144,21 +146,32 @@ export default function App() {
         userPermissions={user?.permissions}
         userAvatar={user?.avatar}
         onProfileUpdate={(data) => updateUser(data)}
+        onProfileOpen={() => setProfileOpen(true)}
+      />
+      <ProfileDialog
+        open={profileOpen}
+        onClose={() => setProfileOpen(false)}
+        user={{ username: user?.username, email: user?.email, avatar: user?.avatar }}
+        onSave={(data) => { setProfileOpen(false); updateUser(data) }}
       />
       <main className="lg:ml-64 p-8">
         <div className="flex items-center justify-between mb-6 gap-4">
           <GlobalSearch onNavigate={setActiveModule} />
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <div className="flex items-center gap-2 pl-2 border-l border-border">
-              <Avatar className="size-7">
+            <button
+              type="button"
+              onClick={() => setProfileOpen(true)}
+              className="flex items-center gap-2 pl-2 border-l border-border hover:opacity-80 transition-opacity"
+            >
+              <Avatar className="size-7 ring-2 ring-border/50">
                 {user?.avatar ? <AvatarImage src={user.avatar} /> : null}
                 <AvatarFallback className="text-xs">
                   <User className="size-3.5" />
                 </AvatarFallback>
               </Avatar>
               <span className="text-sm font-medium text-foreground hidden sm:inline">{user?.username}</span>
-            </div>
+            </button>
           </div>
         </div>
         <ModuleWrapper moduleKey={activeModule}>{renderModule()}</ModuleWrapper>

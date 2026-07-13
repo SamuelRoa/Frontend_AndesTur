@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { trash } from '@/lib/api'
+import { ModuleSkeleton } from '@/components/module-skeleton'
 import { Trash2, RotateCcw, AlertTriangle, Search, ChevronLeft, ChevronRight, Users, MapPin, Package, Truck, Calendar, Shield, Building2 } from 'lucide-react'
 
 const TABLE_ICONS = {
@@ -109,19 +110,7 @@ export function TrashModule() {
   }
 
   if (loading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="font-serif text-3xl font-bold text-foreground">Papelera</h1>
-          <p className="text-muted-foreground mt-1">Elementos eliminados</p>
-        </div>
-        <Card className="border-border">
-          <CardContent className="py-12">
-            <div className="text-center text-muted-foreground">Cargando papelera...</div>
-          </CardContent>
-        </Card>
-      </div>
-    )
+    return <ModuleSkeleton />
   }
 
   return (

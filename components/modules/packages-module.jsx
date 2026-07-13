@@ -22,6 +22,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { packages } from "@/lib/api";
+import { ModuleSkeleton } from "@/components/module-skeleton";
 import { ExportButton } from "@/components/export-button";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useAuth } from "@/lib/auth";
@@ -150,7 +151,7 @@ export function PackagesModule() {
   };
 
   if (loading) {
-    return <div className="text-center text-muted-foreground py-8">Cargando paquetes...</div>;
+    return <ModuleSkeleton />;
   }
 
   return (
