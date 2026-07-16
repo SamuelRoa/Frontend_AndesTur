@@ -287,7 +287,7 @@ export function UsersModule() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="font-serif text-3xl font-bold text-foreground">
             Gestión de Seguridad
@@ -305,12 +305,12 @@ export function UsersModule() {
         </TabsList>
 
         <TabsContent value="users" className="space-y-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="relative w-full sm:max-w-md">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="relative w-full md:max-w-md">
           {canWrite && (
           <Dialog open={isCreateOpen} onOpenChange={(v) => { setIsCreateOpen(v); if (!v) sessionStorage.removeItem("userPrefill"); }}>
             <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto">
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full md:w-auto whitespace-nowrap">
                 <Plus className="h-4 w-4 mr-2" />
                 Nuevo Usuario
               </Button>

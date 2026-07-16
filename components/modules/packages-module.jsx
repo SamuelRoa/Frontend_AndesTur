@@ -156,18 +156,18 @@ export function PackagesModule() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="font-serif text-3xl font-bold text-foreground">Paquetes Turísticos</h1>
           <p className="text-muted-foreground mt-1">Gestión de ofertas desde la base de datos</p>
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex items-center gap-2 w-full md:w-auto">
           <ExportButton moduleName="paquetes" />
           {canWrite && (
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto">
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full md:w-auto whitespace-nowrap">
                 <Plus className="h-4 w-4 mr-2" />
                 Nuevo Paquete
               </Button>

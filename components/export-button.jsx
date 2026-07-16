@@ -31,7 +31,7 @@ export function ExportButton({ moduleName = 'datos' }) {
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="border-border gap-2">
           <Download className="h-4 w-4" />
-          Exportar
+          <span className="hidden md:inline">Exportar</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">

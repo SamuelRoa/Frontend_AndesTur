@@ -154,7 +154,7 @@ export default function App() {
         user={{ username: user?.username, email: user?.email, avatar: user?.avatar }}
         onSave={(data) => { setProfileOpen(false); updateUser(data) }}
       />
-      <main className="lg:ml-64 p-8">
+      <main className="lg:ml-64 p-4 pt-16 md:p-8 md:pt-8">
         <div className="flex items-center justify-between mb-6 gap-4">
           <GlobalSearch onNavigate={setActiveModule} />
           <div className="flex items-center gap-2">

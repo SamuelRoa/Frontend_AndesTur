@@ -228,18 +228,18 @@ export function DestinationsModule() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="font-serif text-3xl font-bold text-foreground">Destinos Turísticos</h1>
           <p className="text-muted-foreground mt-1">Gestión de lugares y experiencias</p>
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex items-center gap-2 w-full md:w-auto">
           <ExportButton moduleName="destinos" />
           {canWrite && (
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto">
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full md:w-auto whitespace-nowrap">
                 <Plus className="h-4 w-4 mr-2" />
                 Nuevo Destino
               </Button>
@@ -304,7 +304,25 @@ export function DestinationsModule() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="destination-image-url">URL de imagen</Label>
+                  <Label>Subir imagen</Label>
+                  <Input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      try {
+                        const res = await destinations.uploadImage(file);
+                        setNewDestination((c) => ({ ...c, image_url: res.data.url }));
+                        toast.success("Imagen subida a Cloudinary");
+                      } catch (err) {
+                        toast.error(err?.message || "Error subiendo imagen");
+                      }
+                    }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="destination-image-url">O pega una URL de imagen</Label>
                   <Input
                     id="destination-image-url"
                     value={newDestination.image_url}
@@ -318,7 +336,7 @@ export function DestinationsModule() {
                     {newDestination.image_url ? (
                       <img src={newDestination.image_url} alt="Preview" className="h-full w-full object-cover" />
                     ) : (
-                      'Pega la URL de la imagen aquí para ver una vista previa'
+                      'Sube una imagen o pega una URL para ver la vista previa'
                     )}
                   </div>
                 </div>
@@ -495,7 +513,25 @@ export function DestinationsModule() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-destination-image-url">URL de imagen</Label>
+                <Label>Subir imagen</Label>
+                <Input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    try {
+                      const res = await destinations.uploadImage(file);
+                      setEditingDestination((c) => ({ ...c, image_url: res.data.url }));
+                      toast.success("Imagen subida a Cloudinary");
+                    } catch (err) {
+                      toast.error(err?.message || "Error subiendo imagen");
+                    }
+                  }}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-destination-image-url">O pega una URL de imagen</Label>
                 <Input
                   id="edit-destination-image-url"
                   value={editingDestination.image_url || ''}
@@ -509,7 +545,7 @@ export function DestinationsModule() {
                   {editingDestination.image_url ? (
                     <img src={editingDestination.image_url} alt="Preview" className="h-full w-full object-cover" />
                   ) : (
-                    'Pega la URL de la imagen aquí para ver una vista previa'
+                    'Sube una imagen o pega una URL para ver la vista previa'
                   )}
                 </div>
               </div>

@@ -189,6 +189,9 @@ export function ReservationsModule() {
   const packagesById = Object.fromEntries(
     packagesList.map((pkg) => [pkg.id_package, pkg]),
   );
+  const destinationsById = Object.fromEntries(
+    destinationsList.map((dest) => [dest.id_destination, dest]),
+  );
   const paymentByReservationId = Object.fromEntries(
     paymentHeaderList.map((payment) => [
       payment.id_reservation,
@@ -199,15 +202,18 @@ export function ReservationsModule() {
   const normalizedReservations = reservationList.map((reservation) => {
     const customer = customersById[reservation.id_customer];
     const pkg = packagesById[reservation.id_package];
+    const dest = destinationsById[reservation.id_destination];
+    const hasDest = reservation.id_destination && dest;
     return {
       ...reservation,
       customerName: customer?.name || "Cliente no encontrado",
       customerEmail: customer?.email || "Sin email",
       customerPhone: customer?.phone_number || "Sin teléfono",
-      packageName: pkg?.name || "Paquete desconocido",
-      packagePrice: pkg?.price != null ? Number(pkg.price) : null,
-      departureDate: pkg?.departure_date || null,
-      returnDate: pkg?.return_date || null,
+      packageName: hasDest ? dest.name : (pkg?.name || "Paquete desconocido"),
+      packagePrice: hasDest ? (dest.price != null ? Number(dest.price) : null) : (pkg?.price != null ? Number(pkg.price) : null),
+      departureDate: hasDest ? null : (pkg?.departure_date || null),
+      returnDate: hasDest ? null : (pkg?.return_date || null),
+      isDestination: !!hasDest,
       totalAmount: paymentByReservationId[reservation.id_reservation] ?? null,
     };
   });
@@ -365,7 +371,7 @@ export function ReservationsModule() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="font-serif text-3xl font-bold text-foreground">
             Reservas
@@ -375,12 +381,12 @@ export function ReservationsModule() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex items-center gap-2 w-full md:w-auto">
           <ExportButton moduleName="reservas" />
           {canWrite && (
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto">
+                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full md:w-auto whitespace-nowrap">
                   <Plus className="h-4 w-4 mr-2" /> Nueva Reserva
                 </Button>
               </DialogTrigger>
@@ -501,7 +507,7 @@ export function ReservationsModule() {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col md:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
@@ -620,7 +626,7 @@ export function ReservationsModule() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-primary/10 p-3 rounded-lg space-y-1">
                   <p className="text-xs text-muted-foreground">
-                    Precio del paquete
+                    {reservation.isDestination ? "Precio del destino" : "Precio del paquete"}
                   </p>
                   <p className="font-serif text-xl font-bold text-primary">
                     {reservation.packagePrice != null
@@ -958,7 +964,7 @@ export function ReservationsModule() {
                   <span className="font-medium">{paymentReservation.customerName}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Paquete:</span>
+                  <span className="text-muted-foreground">{paymentReservation.isDestination ? "Destino:" : "Paquete:"}</span>
                   <span className="font-medium">{paymentReservation.packageName}</span>
                 </div>
                 <div className="flex justify-between">

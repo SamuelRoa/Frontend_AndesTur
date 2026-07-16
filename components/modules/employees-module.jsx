@@ -225,7 +225,7 @@ export function EmployeesModule({ onNavigate }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="font-serif text-3xl font-bold text-foreground">
             Empleados
@@ -234,7 +234,7 @@ export function EmployeesModule({ onNavigate }) {
             Gestión de personal — {total} registros
           </p>
         </div>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex items-center gap-2 w-full md:w-auto">
           <ExportButton moduleName="empleados" />
           {canWrite && (
           <Dialog
@@ -245,7 +245,7 @@ export function EmployeesModule({ onNavigate }) {
             }}
           >
             <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto">
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full md:w-auto whitespace-nowrap">
                 <Plus className="h-4 w-4 mr-2" />
                 Nuevo Empleado
               </Button>

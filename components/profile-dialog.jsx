@@ -67,8 +67,9 @@ export function ProfileDialog({ open, onClose, user, onSave }) {
       const originalAvatar = user?.avatar || null
       if (avatar !== originalAvatar) payload.avatar = avatar
 
-      await auth.updateProfile(payload)
-      if (onSave) onSave({ ...profileForm, avatar })
+      const res = await auth.updateProfile(payload)
+      const serverAvatar = res.data?.avatar || avatar
+      if (onSave) onSave({ ...profileForm, avatar: serverAvatar })
       toast.success('Perfil actualizado correctamente')
       onClose()
     } catch (err) {
