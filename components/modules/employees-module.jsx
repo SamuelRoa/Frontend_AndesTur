@@ -136,12 +136,19 @@ export function EmployeesModule({ onNavigate }) {
   };
 
   const buildPayload = (data) => {
-    const payload = { ...data };
-    if (payload.salary === "" || payload.salary === null) delete payload.salary;
-    else payload.salary = Number(payload.salary);
-    if (payload.birth_date === "") payload.birth_date = null;
-    if (payload.hire_date === "") payload.hire_date = null;
+    const payload = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== null && value !== undefined) {
+        payload[key] = value;
+      }
+    }
+    if (payload.salary === "" ) delete payload.salary;
+    else if (payload.salary !== undefined) payload.salary = Number(payload.salary);
+    if (payload.birth_date === "") delete payload.birth_date;
+    if (payload.hire_date === "") delete payload.hire_date;
     if (payload.email === "") delete payload.email;
+    if (payload.phone === "") delete payload.phone;
+    if (payload.emergency_phone === "") delete payload.emergency_phone;
 
     if (payload.birth_date) {
       if (payload.birth_date < minBirthStr || payload.birth_date > maxBirthStr) {
@@ -161,14 +168,14 @@ export function EmployeesModule({ onNavigate }) {
     setIsSaving(true);
     try {
       const payload = buildPayload(newEmployee);
-      await staff.create(payload);
+      const result = await staff.create(payload);
       await loadEmployees();
       setIsCreateOpen(false);
       setNewEmployee({ ...emptyEmployee });
       setFormTab("basic");
       toast.success("Empleado creado correctamente");
 
-      const created = res.data;
+      const created = result.data;
       if (created && (created.type === "operator" || created.type === "admin_staff")) {
         setUserSuggestion(created);
       }

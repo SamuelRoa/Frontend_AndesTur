@@ -367,10 +367,13 @@ export function EmployeeDocuments({ employee, open, onClose }) {
     </Dialog>
 
       {previewDoc && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80" onClick={closePreview}>
-          <div className="relative max-w-3xl max-h-[90vh] p-2" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80"
+          onPointerDown={(e) => { e.stopPropagation(); closePreview(); }}
+        >
+          <div className="relative max-w-3xl max-h-[90vh] p-2" onPointerDown={(e) => e.stopPropagation()}>
             <button
-              onClick={closePreview}
+              onClick={(e) => { e.stopPropagation(); closePreview(); }}
               className="absolute -top-3 -right-3 p-1.5 rounded-full bg-background shadow-md hover:bg-muted transition-colors z-10"
             >
               <X className="h-5 w-5" />
