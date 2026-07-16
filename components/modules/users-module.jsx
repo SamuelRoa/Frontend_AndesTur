@@ -27,7 +27,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { users as usersApi, auth as authApi } from "@/lib/api";
+import { users as usersApi, auth as authApi, staff as staffApi } from "@/lib/api";
 import { ModuleSkeleton } from "@/components/module-skeleton";
 import { useAuth } from "@/lib/auth";
 import { RolesTab } from "./roles-tab";
@@ -73,6 +73,22 @@ export function UsersModule() {
     password: "",
     role: "operator",
   });
+
+  useEffect(() => {
+    const prefill = sessionStorage.getItem("userPrefill");
+    if (prefill) {
+      try {
+        const data = JSON.parse(prefill);
+        setNewUser({
+          username: `${data.name?.toLowerCase() || ""}_${data.last_name?.toLowerCase() || ""}`,
+          email: data.email || "",
+          password: "",
+          role: data.id_staff ? "operator" : "operator",
+        });
+        setTimeout(() => setIsCreateOpen(true), 100);
+      } catch (_) {}
+    }
+  }, []);
 
   const PASSWORD_REQUIREMENTS = [
     { label: "Mínimo 8 caracteres", test: (p) => p.length >= 8 },
@@ -133,12 +149,25 @@ export function UsersModule() {
 
     setIsSaving(true);
     try {
-      await usersApi.create({
+      const res = await usersApi.create({
         username: newUser.username.trim(),
         email: newUser.email.trim(),
         password: newUser.password,
         role: newUser.role,
       });
+
+      const prefill = sessionStorage.getItem("userPrefill");
+      if (prefill) {
+        try {
+          const data = JSON.parse(prefill);
+          if (data.id_staff && res?.data?.id_user) {
+            await staffApi.update(data.id_staff, { id_user: res.data.id_user });
+            toast.success("Usuario vinculado al empleado correctamente");
+          }
+        } catch (_) {}
+        sessionStorage.removeItem("userPrefill");
+      }
+
       await loadUsers();
       setIsCreateOpen(false);
       setNewUser({ username: "", email: "", password: "", role: "operator" });
@@ -279,7 +308,7 @@ export function UsersModule() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="relative w-full sm:max-w-md">
           {canWrite && (
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+          <Dialog open={isCreateOpen} onOpenChange={(v) => { setIsCreateOpen(v); if (!v) sessionStorage.removeItem("userPrefill"); }}>
             <DialogTrigger asChild>
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
