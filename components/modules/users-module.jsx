@@ -543,7 +543,7 @@ export function UsersModule() {
         )}
       </div>
 
-      <Dialog open={isEditOpen} onOpenChange={(open) => { if (!open) { setIsEditOpen(false); setEditingUser(null); } }}>
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Editar usuario</DialogTitle>
@@ -617,7 +617,7 @@ export function UsersModule() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isViewOpen} onOpenChange={(open) => { if (!open) { setIsViewOpen(false); setViewingUser(null); } }}>
+      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Información del usuario</DialogTitle>
@@ -696,7 +696,7 @@ export function UsersModule() {
         cancelLabel="Cancelar"
       />
 
-      <Dialog open={deleteDialog.open} onOpenChange={(open) => { if (!open) { setDeleteDialog({ open: false, user: null }); setDeletePassword(""); setDeleteError(""); } }}>
+      <Dialog open={deleteDialog.open} onOpenChange={(open) => { setDeleteDialog((prev) => ({ ...prev, open: open })); if (open) { setDeletePassword(""); setDeleteError(""); } }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">

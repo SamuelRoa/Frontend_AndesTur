@@ -293,7 +293,7 @@ export function VehiclesModule() {
         )}
       </div>
 
-      <Dialog open={isEditOpen} onOpenChange={(open) => { if (!open) { setIsEditOpen(false); setEditingVehicle(null); } }}>
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Editar vehículo</DialogTitle>

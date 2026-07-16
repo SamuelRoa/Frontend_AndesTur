@@ -341,7 +341,7 @@ export function EmployeesModule() {
         )}
       </div>
 
-      <Dialog open={isEditOpen} onOpenChange={(open) => { if (!open) { setIsEditOpen(false); setEditingEmployee(null); } }}>
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Editar empleado</DialogTitle>

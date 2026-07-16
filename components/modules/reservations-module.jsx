@@ -794,12 +794,7 @@ export function ReservationsModule() {
 
       <Dialog
         open={isEditOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            setIsEditOpen(false);
-            setEditingReservation(null);
-          }
-        }}
+        onOpenChange={setIsEditOpen}
       >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
@@ -949,12 +944,7 @@ export function ReservationsModule() {
 
       <Dialog
         open={isPaymentDialogOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            setIsPaymentDialogOpen(false);
-            setPaymentReservation(null);
-          }
-        }}
+        onOpenChange={setIsPaymentDialogOpen}
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

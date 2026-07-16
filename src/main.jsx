@@ -1,3 +1,12 @@
+const _origRemoveChild = Node.prototype.removeChild
+Node.prototype.removeChild = function (child) {
+  try {
+    return _origRemoveChild.call(this, child)
+  } catch {
+    return child
+  }
+}
+
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'

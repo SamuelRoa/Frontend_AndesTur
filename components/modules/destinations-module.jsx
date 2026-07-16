@@ -34,6 +34,7 @@ export function DestinationsModule() {
     id_municipality: '',
     name: '',
     description: '',
+    price: '',
     image_url: '',
   })
   const [togglingActiveId, setTogglingActiveId] = useState(null)
@@ -90,7 +91,7 @@ export function DestinationsModule() {
   }, [])
 
   const filteredDestinations = destinationsList.filter((dest) => {
-    const haystack = `${dest.name || ''} ${dest.description || ''} ${dest.id_municipality || ''}`.toLowerCase()
+    const haystack = `${dest.name || ''} ${dest.description || ''} ${dest.id_municipality || ''} ${dest.price || ''}`.toLowerCase()
     return haystack.includes(searchTerm.toLowerCase())
   })
 
@@ -102,17 +103,23 @@ export function DestinationsModule() {
   const handleCreateDestination = async (event) => {
     event.preventDefault()
     if (!newDestination.id_municipality || !newDestination.name.trim() || !newDestination.description.trim()) return
+    const priceNum = Number(newDestination.price)
+    if (!newDestination.price || isNaN(priceNum) || priceNum <= 0) {
+      toast.error('El precio debe ser mayor a 0')
+      return
+    }
     setIsSaving(true)
     try {
       await destinations.create({
         id_municipality: Number(newDestination.id_municipality),
         name: newDestination.name.trim(),
         description: newDestination.description.trim(),
+        price: priceNum,
         image_url: newDestination.image_url.trim() || null,
       })
       await loadDestinations()
       setIsCreateOpen(false)
-      setNewDestination({ id_municipality: '', name: '', description: '', image_url: '' })
+      setNewDestination({ id_municipality: '', name: '', description: '', price: '', image_url: '' })
       toast.success('Destino creado correctamente')
     } catch (err) {
       console.error('Error creating destination:', err)
@@ -130,12 +137,18 @@ export function DestinationsModule() {
   const handleEditDestination = async (event) => {
     event.preventDefault()
     if (!editingDestination.id_municipality || !editingDestination.name.trim() || !editingDestination.description.trim()) return
+    const priceNum = Number(editingDestination.price)
+    if (!editingDestination.price || isNaN(priceNum) || priceNum <= 0) {
+      toast.error('El precio debe ser mayor a 0')
+      return
+    }
     setIsSaving(true)
     try {
       await destinations.update(editingDestination.id_destination, {
         id_municipality: Number(editingDestination.id_municipality),
         name: editingDestination.name.trim(),
         description: editingDestination.description.trim(),
+        price: priceNum,
         image_url: editingDestination.image_url?.trim() || null,
       })
       await loadDestinations()
@@ -279,6 +292,18 @@ export function DestinationsModule() {
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="destination-price">Precio (USD)</Label>
+                  <Input
+                    id="destination-price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={newDestination.price}
+                    onChange={(event) => setNewDestination((current) => ({ ...current, price: event.target.value }))}
+                    placeholder="Ej: 150.00"
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="destination-image-url">URL de imagen</Label>
                   <Input
                     id="destination-image-url"
@@ -366,6 +391,9 @@ export function DestinationsModule() {
                 <span className="font-semibold">Ruta de imagen:</span>{' '}
                 {dest.image_url ? dest.image_url : 'No definida'}
               </div>
+              <div className="text-sm font-semibold text-primary">
+                ${Number(dest.price || 0).toLocaleString()} USD
+              </div>
               {canWrite && (
               <div className="flex gap-2 pt-4 border-t border-border">
                 <Button variant="outline" size="sm" className="flex-1 border-border" onClick={() => openEditDialog(dest)}>
@@ -407,7 +435,7 @@ export function DestinationsModule() {
         )}
       </div>
 
-      <Dialog open={isEditOpen} onOpenChange={(open) => { if (!open) { setIsEditOpen(false); setEditingDestination(null); } }}>
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Editar destino</DialogTitle>
@@ -452,6 +480,18 @@ export function DestinationsModule() {
                   value={editingDestination.description}
                   onChange={(event) => setEditingDestination((current) => ({ ...current, description: event.target.value }))}
                   rows={4}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-destination-price">Precio (USD)</Label>
+                <Input
+                  id="edit-destination-price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={editingDestination.price ?? ''}
+                  onChange={(event) => setEditingDestination((current) => ({ ...current, price: event.target.value }))}
+                  placeholder="Ej: 150.00"
                 />
               </div>
               <div className="space-y-2">

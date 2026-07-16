@@ -280,7 +280,7 @@ export function PackagesModule() {
         )}
       </div>
 
-      <Dialog open={isEditOpen} onOpenChange={(open) => { if (!open) { setIsEditOpen(false); setEditingPackage(null); } }}>
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Editar paquete</DialogTitle>
