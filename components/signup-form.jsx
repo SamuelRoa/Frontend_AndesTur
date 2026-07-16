@@ -2,22 +2,58 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Logo } from '@/components/logo'
+import { cn } from '@/lib/utils'
+
+const PASSWORD_REQUIREMENTS = [
+  { label: 'Mínimo 8 caracteres', test: (p) => p.length >= 8 },
+  { label: 'Al menos una mayúscula', test: (p) => /[A-Z]/.test(p) },
+  { label: 'Al menos una minúscula', test: (p) => /[a-z]/.test(p) },
+  { label: 'Al menos un número', test: (p) => /\d/.test(p) },
+  { label: 'Al menos un carácter especial (!@#$%^&*)', test: (p) => /[!@#$%^&*]/.test(p) },
+]
+
+function validateName(value, label) {
+  if (!value.trim()) return `${label} es requerido`
+  if (value.trim().length < 2) return `${label} debe tener al menos 2 caracteres`
+  return ''
+}
+
+function validateEmail(email) {
+  if (!email.trim()) return 'El email es requerido'
+  if (!email.includes('@')) return 'Ingresa un email válido (ej: usuario@correo.com)'
+  return ''
+}
+
+function validatePassword(password) {
+  if (!password) return 'La contraseña es requerida'
+  const failed = PASSWORD_REQUIREMENTS.filter((r) => !r.test(password))
+  if (failed.length > 0) return 'La contraseña no cumple los requisitos'
+  return ''
+}
+
+function validateConfirmPassword(password, confirm) {
+  if (!confirm) return 'Confirma tu contraseña'
+  if (password !== confirm) return 'Las contraseñas no coinciden'
+  return ''
+}
+
+function FieldError({ message }) {
+  if (!message) return null
+  return (
+    <p className="flex items-center gap-1 text-xs text-destructive mt-1">
+      <AlertCircle className="size-3 shrink-0" />
+      {message}
+    </p>
+  )
+}
 
 export function SignupForm({ onSuccess }) {
-  const PASSWORD_REQUIREMENTS = [
-    { label: 'Mínimo 8 caracteres', test: (p) => p.length >= 8 },
-    { label: 'Al menos una mayúscula', test: (p) => /[A-Z]/.test(p) },
-    { label: 'Al menos una minúscula', test: (p) => /[a-z]/.test(p) },
-    { label: 'Al menos un número', test: (p) => /\d/.test(p) },
-    { label: 'Al menos un carácter especial (!@#$%^&*)', test: (p) => /[!@#$%^&*]/.test(p) },
-  ]
-
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -26,46 +62,70 @@ export function SignupForm({ onSuccess }) {
     confirmPassword: '',
   })
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  })
+  const [touched, setTouched] = useState({})
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+  const updateField = (name, value) => {
+    setFormData((prev) => ({ ...prev, [name]: value }))
     setError('')
+    if (touched[name]) {
+      let err = ''
+      if (name === 'firstName' || name === 'lastName') err = validateName(value, name === 'firstName' ? 'El nombre' : 'El apellido')
+      if (name === 'email') err = validateEmail(value)
+      if (name === 'password') err = validatePassword(value)
+      if (name === 'confirmPassword') err = validateConfirmPassword(formData.password, value)
+      setFieldErrors((prev) => ({ ...prev, [name]: err }))
+    }
+    if (name === 'password' && touched.confirmPassword) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        confirmPassword: validateConfirmPassword(value, formData.confirmPassword),
+      }))
+    }
+  }
+
+  const handleBlur = (name) => {
+    setTouched((prev) => ({ ...prev, [name]: true }))
+    let err = ''
+    if (name === 'firstName' || name === 'lastName') err = validateName(formData[name], name === 'firstName' ? 'El nombre' : 'El apellido')
+    if (name === 'email') err = validateEmail(formData[name])
+    if (name === 'password') err = validatePassword(formData[name])
+    if (name === 'confirmPassword') err = validateConfirmPassword(formData.password, formData.confirmPassword)
+    setFieldErrors((prev) => ({ ...prev, [name]: err }))
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    const allTouched = { firstName: true, lastName: true, email: true, password: true, confirmPassword: true }
+    setTouched(allTouched)
 
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
-      setError('Por favor completa todos los campos')
-      return
+    const errors = {
+      firstName: validateName(formData.firstName, 'El nombre'),
+      lastName: validateName(formData.lastName, 'El apellido'),
+      email: validateEmail(formData.email),
+      password: validatePassword(formData.password),
+      confirmPassword: validateConfirmPassword(formData.password, formData.confirmPassword),
     }
+    setFieldErrors(errors)
 
-    if (!formData.email.includes('@')) {
-      setError('Por favor ingresa un email válido')
-      return
-    }
-
-    const failedReqs = PASSWORD_REQUIREMENTS.filter((r) => !r.test(formData.password))
-    if (failedReqs.length > 0) {
-      setError('La contraseña debe cumplir: ' + failedReqs.map((r) => r.label).join(', '))
-      return
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      setError('Las contraseñas no coinciden')
-      return
-    }
+    const hasErrors = Object.values(errors).some(Boolean)
+    if (hasErrors) return
 
     try {
       setLoading(true)
       setError('')
       await onSuccess({
-        username: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email,
+        username: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+        email: formData.email.trim(),
         password: formData.password,
       })
     } catch (err) {
@@ -75,6 +135,9 @@ export function SignupForm({ onSuccess }) {
     }
   }
 
+  const inputClass = (field) =>
+    cn('border-border focus:ring-primary', touched[field] && fieldErrors[field] && 'border-destructive focus-visible:ring-destructive')
+
   return (
     <Card className="w-full max-w-sm md:max-w-md border-border/40 shadow-float-xl backdrop-blur-2xl bg-card/75 glass-surface animate-float">
       <CardHeader className="space-y-2 flex flex-col items-center text-center">
@@ -83,9 +146,10 @@ export function SignupForm({ onSuccess }) {
         <CardDescription className="text-muted-foreground">Crear nueva cuenta</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} noValidate className="space-y-4">
           {error && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive flex items-center gap-2">
+              <AlertCircle className="size-4 shrink-0" />
               {error}
             </div>
           )}
@@ -98,9 +162,11 @@ export function SignupForm({ onSuccess }) {
                 name="firstName"
                 placeholder="Carlos"
                 value={formData.firstName}
-                onChange={handleChange}
-                className="border-border focus:ring-primary"
+                onChange={(e) => updateField('firstName', e.target.value)}
+                onBlur={() => handleBlur('firstName')}
+                className={inputClass('firstName')}
               />
+              <FieldError message={touched.firstName ? fieldErrors.firstName : ''} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="lastName" className="text-foreground font-medium">Apellido</Label>
@@ -109,9 +175,11 @@ export function SignupForm({ onSuccess }) {
                 name="lastName"
                 placeholder="García"
                 value={formData.lastName}
-                onChange={handleChange}
-                className="border-border focus:ring-primary"
+                onChange={(e) => updateField('lastName', e.target.value)}
+                onBlur={() => handleBlur('lastName')}
+                className={inputClass('lastName')}
               />
+              <FieldError message={touched.lastName ? fieldErrors.lastName : ''} />
             </div>
           </div>
 
@@ -123,9 +191,11 @@ export function SignupForm({ onSuccess }) {
               type="email"
               placeholder="admin@andetur.com"
               value={formData.email}
-              onChange={handleChange}
-              className="border-border focus:ring-primary"
+              onChange={(e) => updateField('email', e.target.value)}
+              onBlur={() => handleBlur('email')}
+              className={inputClass('email')}
             />
+            <FieldError message={touched.email ? fieldErrors.email : ''} />
           </div>
 
           <div className="space-y-2 relative">
@@ -136,8 +206,9 @@ export function SignupForm({ onSuccess }) {
               type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
               value={formData.password}
-              onChange={handleChange}
-              className="border-border focus:ring-primary pr-10"
+              onChange={(e) => updateField('password', e.target.value)}
+              onBlur={() => handleBlur('password')}
+              className={cn(inputClass('password'), 'pr-10')}
             />
             <button
               type="button"
@@ -148,13 +219,14 @@ export function SignupForm({ onSuccess }) {
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
+            <FieldError message={touched.password ? fieldErrors.password : ''} />
             {formData.password && (
               <div className="space-y-1 mt-2">
                 {PASSWORD_REQUIREMENTS.map((req) => {
                   const ok = req.test(formData.password)
                   return (
                     <div key={req.label} className={`flex items-center gap-1.5 text-xs ${ok ? 'text-green-600' : 'text-muted-foreground'}`}>
-                      {ok ? '✓' : '○'} {req.label}
+                      {ok ? <CheckCircle2 className="size-3" /> : <AlertCircle className="size-3" />} {req.label}
                     </div>
                   )
                 })}
@@ -170,8 +242,9 @@ export function SignupForm({ onSuccess }) {
               type={showConfirmPassword ? 'text' : 'password'}
               placeholder="••••••••"
               value={formData.confirmPassword}
-              onChange={handleChange}
-              className="border-border focus:ring-primary pr-10"
+              onChange={(e) => updateField('confirmPassword', e.target.value)}
+              onBlur={() => handleBlur('confirmPassword')}
+              className={cn(inputClass('confirmPassword'), 'pr-10')}
             />
             <button
               type="button"
@@ -182,6 +255,7 @@ export function SignupForm({ onSuccess }) {
             >
               {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
+            <FieldError message={touched.confirmPassword ? fieldErrors.confirmPassword : ''} />
           </div>
 
           <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium" disabled={loading}>

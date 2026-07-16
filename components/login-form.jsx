@@ -2,38 +2,68 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Logo } from '@/components/logo'
 import { auth } from '@/lib/api'
+import { cn } from '@/lib/utils'
+
+function validateEmail(email) {
+  if (!email.trim()) return 'El email es requerido'
+  if (!email.includes('@')) return 'Ingresa un email válido (ej: usuario@correo.com)'
+  return ''
+}
+
+function validatePassword(password) {
+  if (!password) return 'La contraseña es requerida'
+  return ''
+}
+
+function FieldError({ message }) {
+  if (!message) return null
+  return (
+    <p className="flex items-center gap-1 text-xs text-destructive mt-1">
+      <AlertCircle className="size-3 shrink-0" />
+      {message}
+    </p>
+  )
+}
 
 export function LoginForm({ onSuccess }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({ email: '', password: '' })
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [touched, setTouched] = useState({})
   const [showRecovery, setShowRecovery] = useState(false)
   const [recoveryEmail, setRecoveryEmail] = useState('')
   const [recoveryLoading, setRecoveryLoading] = useState(false)
   const [recoveryMessage, setRecoveryMessage] = useState('')
   const [recoveryError, setRecoveryError] = useState('')
+  const [recoveryFieldError, setRecoveryFieldError] = useState('')
+
+  const handleBlur = (field) => {
+    setTouched((prev) => ({ ...prev, [field]: true }))
+    if (field === 'email') {
+      setFieldErrors((prev) => ({ ...prev, email: validateEmail(email) }))
+    }
+    if (field === 'password') {
+      setFieldErrors((prev) => ({ ...prev, password: validatePassword(password) }))
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-
-    if (!email || !password) {
-      setError('Por favor completa todos los campos')
-      return
-    }
-
-    if (!email.includes('@')) {
-      setError('Por favor ingresa un email válido')
-      return
-    }
+    setTouched({ email: true, password: true })
+    const emailErr = validateEmail(email)
+    const passErr = validatePassword(password)
+    setFieldErrors({ email: emailErr, password: passErr })
+    if (emailErr || passErr) return
 
     try {
       setLoading(true)
@@ -53,16 +83,9 @@ export function LoginForm({ onSuccess }) {
 
   const handleRecovery = async (e) => {
     e.preventDefault()
-
-    if (!recoveryEmail) {
-      setRecoveryError('Por favor ingresa tu email')
-      return
-    }
-
-    if (!recoveryEmail.includes('@')) {
-      setRecoveryError('Por favor ingresa un email válido')
-      return
-    }
+    const err = validateEmail(recoveryEmail)
+    setRecoveryFieldError(err)
+    if (err) return
 
     try {
       setRecoveryLoading(true)
@@ -86,9 +109,10 @@ export function LoginForm({ onSuccess }) {
           <CardDescription className="text-muted-foreground">Recuperar contraseña</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleRecovery} className="space-y-4">
+          <form onSubmit={handleRecovery} noValidate className="space-y-4">
             {recoveryError && (
-              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive flex items-center gap-2">
+                <AlertCircle className="size-4 shrink-0" />
                 {recoveryError}
               </div>
             )}
@@ -114,9 +138,12 @@ export function LoginForm({ onSuccess }) {
                   setRecoveryEmail(e.target.value)
                   setRecoveryError('')
                   setRecoveryMessage('')
+                  setRecoveryFieldError('')
                 }}
-                className="border-border focus:ring-primary"
+                onBlur={() => setRecoveryFieldError(validateEmail(recoveryEmail))}
+                className={cn('border-border focus:ring-primary', recoveryFieldError && 'border-destructive focus-visible:ring-destructive')}
               />
+              <FieldError message={recoveryFieldError} />
             </div>
 
             <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium" disabled={recoveryLoading}>
@@ -131,6 +158,7 @@ export function LoginForm({ onSuccess }) {
                   setRecoveryError('')
                   setRecoveryMessage('')
                   setRecoveryEmail('')
+                  setRecoveryFieldError('')
                 }}
                 className="text-primary hover:underline font-medium"
               >
@@ -151,13 +179,14 @@ export function LoginForm({ onSuccess }) {
         <CardDescription className="text-muted-foreground">Sistema Administrativo de Agencia Turística</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} noValidate className="space-y-4">
           {error && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive flex items-center gap-2">
+              <AlertCircle className="size-4 shrink-0" />
               {error}
             </div>
           )}
-          
+
           <div className="space-y-2">
             <Label htmlFor="email" className="text-foreground font-medium">Email</Label>
             <Input
@@ -168,9 +197,12 @@ export function LoginForm({ onSuccess }) {
               onChange={(e) => {
                 setEmail(e.target.value)
                 setError('')
+                if (touched.email) setFieldErrors((prev) => ({ ...prev, email: validateEmail(e.target.value) }))
               }}
-              className="border-border focus:ring-primary"
+              onBlur={() => handleBlur('email')}
+              className={cn('border-border focus:ring-primary', touched.email && fieldErrors.email && 'border-destructive focus-visible:ring-destructive')}
             />
+            <FieldError message={touched.email ? fieldErrors.email : ''} />
           </div>
 
           <div className="space-y-2 relative">
@@ -183,8 +215,10 @@ export function LoginForm({ onSuccess }) {
               onChange={(e) => {
                 setPassword(e.target.value)
                 setError('')
+                if (touched.password) setFieldErrors((prev) => ({ ...prev, password: validatePassword(e.target.value) }))
               }}
-              className="border-border focus:ring-primary pr-10"
+              onBlur={() => handleBlur('password')}
+              className={cn('border-border focus:ring-primary pr-10', touched.password && fieldErrors.password && 'border-destructive focus-visible:ring-destructive')}
             />
             <button
               type="button"
@@ -195,6 +229,7 @@ export function LoginForm({ onSuccess }) {
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
+            <FieldError message={touched.password ? fieldErrors.password : ''} />
           </div>
 
           <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium" disabled={loading}>
@@ -215,4 +250,3 @@ export function LoginForm({ onSuccess }) {
     </Card>
   )
 }
-
