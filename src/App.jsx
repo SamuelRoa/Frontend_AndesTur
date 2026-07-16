@@ -52,7 +52,7 @@ export default function App() {
           ? <Dashboard onNavigate={setActiveModule} userName={user?.username} />
           : <DashboardOperador onNavigate={setActiveModule} userName={user?.username} />;
       case "employees":
-        return <EmployeesModule />;
+        return <EmployeesModule onNavigate={setActiveModule} />;
       case "destinations":
         return <DestinationsModule />;
       case "packages":
