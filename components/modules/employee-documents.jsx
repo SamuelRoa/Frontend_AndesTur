@@ -142,6 +142,8 @@ export function EmployeeDocuments({ employee, open, onClose }) {
       loadDocuments();
       setShowUpload(false);
       setUploadData({ document_type: "other", notes: "", file: null });
+      setPreviewDoc(null);
+      setPreviewUrl(null);
     }
   }, [open, loadDocuments]);
 
@@ -369,11 +371,11 @@ export function EmployeeDocuments({ employee, open, onClose }) {
       {previewDoc && createPortal(
         <div
           className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80"
-          onPointerDown={(e) => { e.stopPropagation(); closePreview(); }}
+          onPointerDown={(e) => { e.nativeEvent.stopImmediatePropagation(); closePreview(); }}
         >
-          <div className="relative max-w-3xl max-h-[90vh] p-2" onPointerDown={(e) => e.stopPropagation()}>
+          <div className="relative max-w-3xl max-h-[90vh] p-2" onPointerDown={(e) => e.nativeEvent.stopImmediatePropagation()}>
             <button
-              onClick={(e) => { e.stopPropagation(); closePreview(); }}
+              onClick={(e) => { e.nativeEvent.stopImmediatePropagation(); closePreview(); }}
               className="absolute -top-3 -right-3 p-1.5 rounded-full bg-background shadow-md hover:bg-muted transition-colors z-10"
             >
               <X className="h-5 w-5" />
