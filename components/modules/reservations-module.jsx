@@ -204,6 +204,8 @@ export function ReservationsModule() {
     const pkg = packagesById[reservation.id_package];
     const dest = destinationsById[reservation.id_destination];
     const hasDest = reservation.id_destination && dest;
+    const travelDateVal = hasDest ? reservation.travel_date : pkg?.departure_date;
+    const isPast = travelDateVal ? travelDateVal < new Date().toISOString().slice(0, 10) : false;
     return {
       ...reservation,
       customerName: customer?.name || "Cliente no encontrado",
@@ -215,6 +217,7 @@ export function ReservationsModule() {
       returnDate: hasDest ? null : (pkg?.return_date || null),
       isDestination: !!hasDest,
       totalAmount: paymentByReservationId[reservation.id_reservation] ?? null,
+      isPast,
     };
   });
 
@@ -671,19 +674,26 @@ export function ReservationsModule() {
                 </div>
               )}
               <div className="flex items-center justify-between">
-                <span
-                  className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${
-                    reservation.pay_state === "paid"
-                      ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                      : reservation.pay_state === "partial"
-                        ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                        : reservation.pay_state === "rejected"
-                          ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                          : "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
-                  }`}
-                >
-                  {getPayStateLabel(reservation.pay_state)}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${
+                      reservation.pay_state === "paid"
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                        : reservation.pay_state === "partial"
+                          ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                          : reservation.pay_state === "rejected"
+                            ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                            : "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                    }`}
+                  >
+                    {getPayStateLabel(reservation.pay_state)}
+                  </span>
+                  {reservation.isPast && (
+                    <span className="text-xs text-red-500 font-semibold dark:text-red-400">
+                      ⚠️ Historial (Pasada)
+                    </span>
+                  )}
+                </div>
                 {reservation.totalAmount != null &&
                   reservation.packagePrice != null && (
                     <span
@@ -701,7 +711,7 @@ export function ReservationsModule() {
               </div>
               {canWrite && (
                 <div className="flex flex-wrap gap-2 pt-4 border-t border-border">
-                  {reservation.pay_state !== "paid" && (
+                  {reservation.pay_state !== "paid" && !reservation.isPast && (
                     <Button
                       variant="default"
                       size="sm"
@@ -717,7 +727,7 @@ export function ReservationsModule() {
                       <CheckCircle className="h-4 w-4 mr-1" /> Aprobar
                     </Button>
                   )}
-                  {reservation.pay_state !== "paid" && (
+                  {reservation.pay_state !== "paid" && !reservation.isPast && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -728,14 +738,16 @@ export function ReservationsModule() {
                       <DollarSign className="h-4 w-4 mr-1" /> Registrar pago
                     </Button>
                   )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1 border-border"
-                    onClick={() => openEditDialog(reservation)}
-                  >
-                    <Edit2 className="h-4 w-4 mr-1" /> Editar
-                  </Button>
+                  {!reservation.isPast && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 border-border"
+                      onClick={() => openEditDialog(reservation)}
+                    >
+                      <Edit2 className="h-4 w-4 mr-1" /> Editar
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     size="sm"
