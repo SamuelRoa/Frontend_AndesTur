@@ -40,7 +40,19 @@ AndesTur_panel/
 ---
 
 ## 🚀 Cómo Empezar
-### 1️⃣ Backend
+
+### 🐳 Opción Recomendada: Con Docker (Todo el Ecosistema)
+Desde la raíz principal del proyecto (`c:\Proyectos\AndesTur`):
+```bash
+docker compose up --build
+```
+- **Panel Admin:** `http://localhost:3001`
+- **Sitio Web Cliente:** `http://localhost:3000`
+- **Backend API:** `http://localhost:5000`
+
+---
+
+### 1️⃣ Backend (Manual)
 ```bash
 git clone https://github.com/SamuelRoa/Backend_AndesTur.git
 cd Backend_AndesTur
@@ -48,7 +60,7 @@ npm install
 # Configura .env (ver CREDENCIALES.txt para Supabase)
 npm run dev   # http://localhost:3000
 ```
-### 2️⃣ Frontend (este panel)
+### 2️⃣ Frontend (este panel, Manual)
 ```bash
 git clone https://github.com/SamuelRoa/AndesTur_website.git  # contiene el frontend
 cd AndesTur_panel
